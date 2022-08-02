@@ -14,6 +14,26 @@ if(BUILD_LOCAL_EXAMPLES)
             localhost/c/rasta.c)
     target_link_libraries(rasta_example_local rasta)
 
+    # rasta_example_new on localhost
+    add_executable(interlocking
+            MyRastaInterlocking/main.c)
+    target_link_libraries(interlocking rasta)
+
+    # rasta_example_new on localhost
+    add_executable(point
+            MyRastaPoint/main.c)
+    target_link_libraries(point rasta)
+
+    # udptest executable
+    #add_executable(udptestSender
+    #        udptestSender.c)
+
+    # udptest executable
+    #add_executable(udptestReceiver
+    #        udptestReceiver.c)
+
+    configure_file(../config/rasta_Interlocking.cfg ../rasta_Interlocking.cfg COPYONLY)
+
     # Copy RaSTA configs to build directory
     configure_file(../config/rasta_server_local.cfg ../rasta_server_local.cfg COPYONLY)
     configure_file(../config/rasta_client1_local.cfg ../rasta_client1_local.cfg COPYONLY)
