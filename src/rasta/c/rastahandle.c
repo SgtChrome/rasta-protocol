@@ -410,11 +410,17 @@ void rasta_handle_init(struct rasta_handle *h, const char* config_file_path) {
                 logger_set_log_file(&h->logger, logger_file.value.string.c);
             } else {
                 // error in config
+                char cwd[4096]; // path max
+                getcwd(cwd, sizeof(cwd));
+                printf("Error in config file at %s%s!\n", cwd, config_file_path);
                 exit(1);
             }
         }
     } else {
         // error in config
+        char cwd[4096]; // path max
+        getcwd(cwd, sizeof(cwd));
+        printf("Error in config file at %s%s!\n", cwd, config_file_path);
         exit(1);
     }
 
