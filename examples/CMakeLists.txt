@@ -38,6 +38,7 @@ if(BUILD_LOCAL_EXAMPLES)
 
     # Copy RaSTA configs to build directory
     configure_file(../config/rasta_Interlocking.cfg ../rasta_Interlocking.cfg COPYONLY)
+    configure_file(../config/rasta_Point.cfg ../rasta_Point.cfg COPYONLY)
     configure_file(../config/rasta_server_local.cfg ../rasta_server_local.cfg COPYONLY)
     configure_file(../config/rasta_client1_local.cfg ../rasta_client1_local.cfg COPYONLY)
     configure_file(../config/rasta_client2_local.cfg ../rasta_client2_local.cfg COPYONLY)

@@ -10,6 +10,7 @@
 #include "rmemory.h"
 #include <unistd.h>
 #include "internal.h"
+#include "myRasta.h"
 
 #define CONFIG_PATH "../../../rasta_Interlocking.cfg"
 
@@ -17,20 +18,6 @@
 #define ID_S1 0x62
 #define ID_S2 0x63
 
-void printHelpAndExit(void){
-    printf("Invalid Arguments!\n use 'r' to start in receiver mode and 's1' or 's2' to start in sender mode.\n");
-    exit(1);
-}
-
-void addRastaString(struct RastaMessageData * data, int pos, char * str) {
-    int size =  strlen(str) + 1;
-
-    struct RastaByteArray msg ;
-    allocateRastaByteArray(&msg, size);
-    rmemcpy(msg.bytes, str, size);
-
-    data->data_array[pos] = msg;
-}
 
 int client1 = 1;
 int client2 = 1;
@@ -39,141 +26,21 @@ struct internalUDPhandle udpSender;
 struct internalUDPhandle udpReceiver;
 
 void onConnectionStateChange(struct rasta_notification_result *result) {
-    printf("\n Connectionstate change (remote: %lu)", result->connection.remote_id);
-
-    switch (result->connection.current_state) {
-        case RASTA_CONNECTION_CLOSED:
-            printf("\nCONNECTION_CLOSED \n\n");
-            break;
-        case RASTA_CONNECTION_START:
-            printf("\nCONNECTION_START \n\n");
-            break;
-        case RASTA_CONNECTION_DOWN:
-            printf("\nCONNECTION_DOWN \n\n");
-            break;
-        case RASTA_CONNECTION_UP:
-            printf("\nCONNECTION_UP \n\n");
-            // Initialize listener
-
-            //send data to server
-            if (result->connection.my_id == ID_S1) { //Client 1
-                struct RastaMessageData messageData1;
-                allocateRastaMessageData(&messageData1, 1);
-
-                // messageData1.data_array[0] = msg1;
-                // messageData1.data_array[1] = msg2;
-                addRastaString(&messageData1, 0, "Message from Sender 1");
-
-                //send data to server
-                sr_send(result->handle,ID_R, messageData1);
-
-                //freeRastaMessageData(&messageData1);
-            } else if (result->connection.my_id == ID_S2) { //Client 2
-                struct RastaMessageData messageData1;
-                allocateRastaMessageData(&messageData1, 1);
-
-                // messageData1.data_array[0] = msg1;
-                // messageData1.data_array[1] = msg2;
-                addRastaString(&messageData1, 0, "Message from Sender 2");
-
-                //send data to server
-                sr_send(result->handle,ID_R, messageData1);
-
-                //freeRastaMessageData(&messageData1);
-            }
-            else if (result->connection.my_id == ID_R) {
-                if (result->connection.remote_id == ID_S1) client1 = 0;
-                else if (result->connection.remote_id == ID_S2) client2 = 0;
-            }
-
-
-            break;
-        case RASTA_CONNECTION_RETRREQ:
-            printf("\nCONNECTION_RETRREQ \n\n");
-            break;
-        case RASTA_CONNECTION_RETRRUN:
-            printf("\nCONNECTION_RETRRUN \n\n");
-            break;
-    }
-
+    onConnectionStateChangeProxy(result, udpReceiver);
 }
-
-void onHandshakeCompleted(struct rasta_notification_result *result){
-    printf("Handshake complete, state is now UP (with ID 0x%lX)\n", result->connection.remote_id);
+void onHandshakeCompleted(struct rasta_notification_result *result) {
+    onHandshakeCompletedProxy(result);
 }
-
-void onTimeout(struct rasta_notification_result *result){
-    printf("Entity 0x%lX had a heartbeat timeout!\n", result->connection.remote_id);
+void onTimeout(struct rasta_notification_result *result) {
+    onTimeoutProxy(result);
 }
-
 void onReceive(struct rasta_notification_result *result) {
-    rastaApplicationMessage p;
-
-    switch (result->connection.my_id) {
-        case ID_R:
-            //Server
-            printf("\nReceived data from Client %lu", result->connection.remote_id);
-
-            p = sr_get_received_data(result->handle,&result->connection);
-
-            printf("\nPacket is from %lu", p.id);
-            printf("\nMsg: %s", p.appMessage.bytes);
-
-            printf("\n\n\n");
-
-            printf("\nSend it to other client \n");
-
-
-            sendMessageToOC(udpSender, p.appMessage.bytes);
-
-            unsigned long target;
-            if (p.id == ID_S1) {
-                while (client2) {sleep(1);}
-                target = ID_S2;
-            }
-            else {
-                while (client1) {sleep(1);}
-                target = ID_S1;
-            }
-
-            printf("Client message from %lu is now send to %lu\n", p.id,target);
-
-            struct RastaMessageData messageData1;
-            allocateRastaMessageData(&messageData1, 1);
-
-            addRastaString(&messageData1,0,(char*)p.appMessage.bytes);
-
-            sr_send(result->handle,target,messageData1);
-
-            printf("Message forwarded\n");
-
-            sleep(1);
-
-            printf("Disconnect to client %lu \n\n\n", target);
-
-            sr_disconnect(result->handle,target);
-
-
-
-            break;
-        case ID_S1: case ID_S2:
-            printf("\nReceived data from Server %lu", result->connection.remote_id);
-
-            p = sr_get_received_data(result->handle,&result->connection);
-
-            printf("\nPacket is from %lu", p.id);
-            printf("\nMsg: %s", p.appMessage.bytes);
-
-            printf("\n\n\n");
-            break;
-    }
+    onReceiveProxy(result, udpSender);
 }
 
 int main(){
     initUDPReceiver(&udpReceiver);
     initUDPSender(&udpSender);
-
-    printf("main %d\n", udpSender.sockfd);
 
     struct rasta_handle h;
     struct RastaIPData toServer[2];
@@ -192,12 +59,18 @@ int main(){
     h.notifications.on_connection_state_change = onConnectionStateChange;
     h.notifications.on_receive = onReceive;
     h.notifications.on_handshake_complete = onHandshakeCompleted;
+    h.notifications.on_heartbeat_timeout = onTimeout;
+
     /* printf("->   Press Enter to connect\n");
     getchar(); */
     printf("All notification handlers initiated\n");
 
     startInternalReceiver(udpReceiver, h);
     printf("Internal Receiver started\n");
+
+
+    sr_connect(&h,ID_R,toServer);
+    printf("Trying to connect to Client\n");
 
     char *message = "left";
 
@@ -207,11 +80,6 @@ int main(){
         sleep(1);
     }
 
-    printf("->   Preparing connection request to %s:%d\n", toServer[0].ip, toServer[0].port);
-    sr_connect(&h,ID_R,toServer);
-    printf("->   Connection request sent to 0x%lX\n", (unsigned long)ID_R);
-
-    getchar();
     pause();
     printf("Starting clean up\n");
     sr_cleanup(&h);

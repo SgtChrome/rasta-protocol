@@ -47,7 +47,8 @@ endif(ENABLE_CODE_COVERAGE)
 include_directories(
         src/rasta/headers
         src/sci/headers
-        src/internal/headers)
+        src/internal/headers
+        src/myRasta/)
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin/exe/examples)
 set(LIBRARY_OUTPUT_PATH bin/lib)
@@ -93,6 +94,7 @@ add_library(rasta SHARED
         #internal udp
         src/internal/c/internalSender.c
         src/internal/c/internalReceiver.c
+        src/myRasta/myRasta.c
         # RaSTA sources
         src/rasta/c/config.c
         src/rasta/c/dictionary.c
