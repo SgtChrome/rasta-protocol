@@ -33,6 +33,9 @@ if(BUILD_LOCAL_EXAMPLES)
     #        udptestReceiver.c)
 
     configure_file(../config/rasta_Interlocking.cfg ../rasta_Interlocking.cfg COPYONLY)
+    add_executable(event_system_example_local
+            localhost/c/event_test.c)
+    target_link_libraries(event_system_example_local rasta)
 
     # Copy RaSTA configs to build directory
     configure_file(../config/rasta_server_local.cfg ../rasta_server_local.cfg COPYONLY)

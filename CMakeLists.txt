@@ -56,6 +56,7 @@ set(LIBRARY_OUTPUT_PATH bin/lib)
 set(RASTA_HDRS
         src/rasta/headers/config.h
         src/rasta/headers/dictionary.h
+        src/rasta/headers/event_system.h
         src/rasta/headers/fifo.h
         src/rasta/headers/logging.h
         src/rasta/headers/rasta_new.h
@@ -95,6 +96,7 @@ add_library(rasta SHARED
         # RaSTA sources
         src/rasta/c/config.c
         src/rasta/c/dictionary.c
+        src/rasta/c/event_system.c
         src/rasta/c/fifo.c
         src/rasta/c/logging.c
         src/rasta/c/rasta_new.c
@@ -123,7 +125,7 @@ add_library(rasta SHARED
         src/sci/c/scip_telegram_factory.c
         )
 # Link system libraries for librasta
-target_link_libraries(rasta rt pthread)
+target_link_libraries(rasta rt)
 
 set_property(
     TARGET rasta
