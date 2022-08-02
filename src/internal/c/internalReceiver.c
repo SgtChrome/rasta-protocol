@@ -11,6 +11,7 @@
 #include <rasta_new.h>
 #include "rasta_new.h"
 #include <errno.h>
+#include "myRasta.h"
 
 #define PORT	20002
 #define MAXLINE 1024
@@ -21,15 +22,6 @@ typedef struct {
     struct rasta_handle * handle;
 } passHack;
 
-void addRastaString(struct RastaMessageData * data, int pos, char * str) {
-    int size =  strlen(str) + 1;
-
-    struct RastaByteArray msg ;
-    allocateRastaByteArray(&msg, size);
-    rmemcpy(msg.bytes, str, size);
-
-    data->data_array[pos] = msg;
-}
 
 int initUDPReceiver(struct internalUDPhandle *udp) {
 	// Creating socket file descriptor
@@ -94,7 +86,6 @@ int startInternalReceiver(struct internalUDPhandle udp, struct rasta_handle hand
 	//create container
     pH->udp = udp;
     pH->handle = &handle;
-
 
 	pthread_create(&caller_thread, NULL, receiveMessages, pH);
 	return 1;
