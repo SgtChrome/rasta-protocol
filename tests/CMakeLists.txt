@@ -1,3 +1,4 @@
+set(PKG_CONFIG_EXECUTABLE "/usr/bin/pkg-config")
 include(FindPkgConfig)
 if(PKG_CONFIG_FOUND)
     pkg_check_modules(CUnit IMPORTED_TARGET cunit)
