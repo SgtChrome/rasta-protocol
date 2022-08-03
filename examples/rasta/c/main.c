@@ -182,8 +182,8 @@ int main(int argc, char *argv[]){
     strcpy(toServer[0].ip, server1IP);
     strcpy(toServer[1].ip, server2IP);
 #else
-    strcpy(toServer[0].ip, "10.0.0.100");
-    strcpy(toServer[1].ip, "10.0.0.101");
+    strcpy(toServer[0].ip, "10.152.2.20");
+    strcpy(toServer[1].ip, "10.152.2.20");
 #endif
     toServer[0].port = 8888;
     toServer[1].port = 8889;
