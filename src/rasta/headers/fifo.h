@@ -6,6 +6,8 @@ extern "C" {  // only need to export C interface if
               // used by C++ source code
 #endif
 
+#include <pthread.h>
+
 /**
  * Representation of an element in the FIFO
  */
@@ -40,6 +42,10 @@ typedef struct {
      * The last (newest) element in the FIFO
      */
     struct fifo_element * tail;
+    /**
+     * The mutex for the FIFO
+     */
+    pthread_mutex_t lock;
 }fifo_t;
 
 /**

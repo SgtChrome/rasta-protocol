@@ -11,6 +11,7 @@ extern "C" {  // only need to export C interface if
 #endif
 
 #include <mqueue.h>
+#include <pthread.h>
 #include "rastalist.h"
 #include <rastahashing.h>
 //TODO: check
@@ -20,20 +21,7 @@ extern "C" {  // only need to export C interface if
 #include "config.h"
 #include "rasta_red_multiplexer.h"
 
-/**
- * struct that is returned in all notifications
- */
-struct rasta_notification_result {
-    /**
-     * copy of the calling rasta connection (this should always be used first)
-     */
-    struct rasta_connection connection;
-
-    /**
-     * handle, don't touch
-     */
-    struct rasta_handle *handle;
-};
+struct rasta_notification_result;
 
 /**
  * pointer to a function that will be called when application messages are ready for processing
@@ -115,6 +103,22 @@ struct rasta_notification_ptr{
     on_heartbeat_timeout_ptr on_heartbeat_timeout;
 };
 
+
+/**
+ * struct that is returned in all notifications
+ */
+struct rasta_notification_result {
+    /**
+     * copy of the calling rasta connection (this should always be used first)
+     */
+    struct rasta_connection connection;
+
+    /**
+     * handle, don't touch
+     */
+    struct rasta_handle *handle;
+};
+
 struct rasta_disconnect_notification_result {
     struct rasta_notification_result result;
     unsigned short reason;
@@ -146,6 +150,8 @@ struct rasta_sending_handle {
 
     int *running;
 
+    pthread_t send_thread;
+
     /**
      * The paramenters that are used for SR checksums
      */
@@ -174,6 +180,8 @@ struct rasta_heartbeat_handle {
     struct RastaList *connections;
 
     int *running;
+
+    pthread_t hb_thread;
 
     /**
      * The paramenters that are used for SR checksums
@@ -205,6 +213,8 @@ struct rasta_receive_handle {
 
     int *running;
 
+    pthread_t recv_thread;
+
     /**
      * The paramenters that are used for SR checksums
      */
@@ -214,32 +224,34 @@ struct rasta_receive_handle {
 
 struct rasta_handle {
     /**
-    * the receiving data
+    * the receiving thread
     */
     struct rasta_receive_handle *receive_handle;
     int recv_running;
 
     /**
-     * the sending data
+     * the sending thread
      */
     struct rasta_sending_handle *send_handle;
     int send_running;
 
     /**
-     * the heartbeat data
+     * the heartbeat thread
      */
     struct rasta_heartbeat_handle *heartbeat_handle;
     int hb_running;
 
     /**
-     * literall events used in the event loop
-     */
-    event_container events;
-
-    /**
     * pointers to functions that will be called on notifications as described in 5.2.2 and 5.5.6.4
     */
     struct rasta_notification_ptr notifications;
+
+    /**
+     *
+     */
+    int running_notifications;
+
+    pthread_mutex_t notification_lock;
 
     /**
     * the logger which is used to log protocol activities

@@ -14,6 +14,7 @@ extern "C" {  // only need to export C interface if
               // used by C++ source code
 #endif
 
+#include <pthread.h>
 #include <mqueue.h>
 #include "fifo.h"
 
@@ -108,6 +109,16 @@ struct logger_t{
      * the path to the log file, when file logging is used
      */
     char* log_file;
+
+    /**
+     * the mutex used to enable use in multiple threads
+     */
+    pthread_mutex_t mutex;
+
+    /**
+     * the thread that writes the buffered log messages to the output
+     */
+    pthread_t write_thread;
 
     /**
      * the FIFO that is used to buffer log messages

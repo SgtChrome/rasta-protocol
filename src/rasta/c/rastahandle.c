@@ -30,8 +30,18 @@ struct rasta_notification_result sr_create_notification_result(struct rasta_hand
  * @param connection the connection that will be used
  * @return unused
  */
-void on_constatechange_call(struct rasta_notification_result * result){
+void* on_constatechange_call(void * container){
+    struct rasta_notification_result * result = (struct rasta_notification_result * )container;
+
     (*result->handle->notifications.on_connection_state_change)(result);
+
+    // notification handler completed, decrease amount of running threads
+    result->handle->running_notifications = result->handle->running_notifications -1;
+
+    //free container
+    rfree(container);
+
+    return NULL;
 }
 
 /**
@@ -40,17 +50,43 @@ void on_constatechange_call(struct rasta_notification_result * result){
  * @param connection the connection that is used
  */
 void fire_on_connection_state_change(struct rasta_notification_result result){
+    pthread_mutex_lock(&result.handle->notification_lock);
     if (result.handle->notifications.on_connection_state_change == NULL){
         // notification not set, do nothing
+        pthread_mutex_unlock(&result.handle->notification_lock);
         return;
     }
 
-    on_constatechange_call(&result);
+    // a thread will be started, increase amount of running notification threads
+    result.handle->running_notifications = result.handle->running_notifications + 1;
+
+    pthread_t caller_thread;
+
+    //create container
+    struct rasta_notification_result* container = rmalloc(sizeof(struct rasta_notification_result));
+    *container = result;
+
+    if (pthread_create(&caller_thread, NULL, on_constatechange_call, container)){
+        logger_log(&result.handle->logger, LOG_LEVEL_ERROR, "RaSTA call on connection state change", "error while creating thread");
+        exit(1);
+    }
+
+    pthread_mutex_unlock(&result.handle->notification_lock);
 }
 
 
-void on_receive_call(struct rasta_notification_result * result){
+void* on_receive_call(void * container){
+    struct rasta_notification_result * result = (struct rasta_notification_result * )container;
+
     (*result->handle->notifications.on_receive)(result);
+
+    // notification handler completed, decrease amount of running threads
+    result->handle->running_notifications = result->handle->running_notifications -1;
+
+    //free container
+    rfree(container);
+
+    return NULL;
 }
 
 /**
@@ -59,22 +95,36 @@ void on_receive_call(struct rasta_notification_result * result){
  * @param connection the connection that is used
  */
 void fire_on_receive(struct rasta_notification_result result){
+    pthread_mutex_lock(&result.handle->notification_lock);
     if (result.handle->notifications.on_receive == NULL){
         // notification not set, do nothing
+        pthread_mutex_unlock(&result.handle->notification_lock);
         return;
     }
+
+    // a thread will be started, increase amount of running notification threads
+    result.handle->running_notifications = result.handle->running_notifications + 1;
+
+    pthread_t caller_thread;
 
     //create container
     struct rasta_notification_result* container = rmalloc(sizeof(struct rasta_notification_result));
     *container = result;
 
-    on_receive_call(&result);
+    if (pthread_create(&caller_thread, NULL, on_receive_call, container)){
+        logger_log(&result.handle->logger, LOG_LEVEL_ERROR, "RaSTA call on connection state change", "error while creating thread");
+        exit(1);
+    }
+    pthread_mutex_unlock(&result.handle->notification_lock);
 }
 
-void on_discrequest_change_call(struct rasta_disconnect_notification_result * container){
+void* on_discrequest_change_call(void * container){
     struct rasta_disconnect_notification_result * result = (struct rasta_disconnect_notification_result * )container;
 
     (*result->result.handle->notifications.on_disconnection_request_received)(&result->result,result->reason,result->detail);
+
+    // notification handler completed, decrease amount of running threads
+    result->result.handle->running_notifications = result->result.handle->running_notifications -1;
 
     //free container
     rfree(container);
@@ -88,11 +138,18 @@ void on_discrequest_change_call(struct rasta_disconnect_notification_result * co
  * @param connection the connection that is used
  */
 void fire_on_discrequest_state_change(struct rasta_notification_result result, struct RastaDisconnectionData data){
+    pthread_mutex_lock(&result.handle->notification_lock);
 
     if (result.handle->notifications.on_disconnection_request_received == NULL){
         // notification not set, do nothing
+        pthread_mutex_unlock(&result.handle->notification_lock);
         return;
     }
+
+    // a thread will be started, increase amount of running notification threads
+    result.handle->running_notifications = result.handle->running_notifications + 1;
+
+    pthread_t caller_thread;
 
     //create container
 
@@ -102,7 +159,12 @@ void fire_on_discrequest_state_change(struct rasta_notification_result result, s
     container->reason = data.reason;
     container->detail = data.details;
 
-    on_discrequest_change_call(container);
+    if (pthread_create(&caller_thread, NULL, on_discrequest_change_call, container)){
+        logger_log(&result.handle->logger, LOG_LEVEL_ERROR, "RaSTA call disconnection", "error while creating thread");
+        exit(1);
+    }
+
+    pthread_mutex_unlock(&result.handle->notification_lock);
 }
 
 
@@ -112,10 +174,13 @@ void fire_on_discrequest_state_change(struct rasta_notification_result result, s
  * @param connection the connection that will be used
  * @return unused
  */
-void on_diagnostic_call(void * container){
+void* on_diagnostic_call(void * container){
     struct rasta_notification_result * result = (struct rasta_notification_result * )container;
 
     (*result->handle->notifications.on_diagnostic_notification)(result);
+
+    // notification handler completed, decrease amount of running threads
+    result->handle->running_notifications = result->handle->running_notifications -1;
 
     //free container
     rfree(container);
@@ -129,47 +194,115 @@ void on_diagnostic_call(void * container){
  * @param connection the connection that is used
  */
 void fire_on_diagnostic_notification(struct rasta_notification_result result){
+    pthread_mutex_lock(&result.handle->notification_lock);
 
     if (result.handle->notifications.on_diagnostic_notification == NULL){
         // notification not set, do nothing
+        pthread_mutex_unlock(&result.handle->notification_lock);
         return;
     }
 
     if (result.connection.received_diagnostic_message_count <= 0) {
         // no diagnostic notification to send
+        pthread_mutex_unlock(&result.handle->notification_lock);
         return;
     }
 
+    // a thread will be started, increase amount of running notification threads
+    result.handle->running_notifications = result.handle->running_notifications + 1;
+
+    pthread_t caller_thread;
+
     //create container
-    on_diagnostic_call(&result);
+    struct rasta_notification_result* container = rmalloc(sizeof(struct rasta_notification_result));
+    *container = result;
+
+    if (pthread_create(&caller_thread, NULL, on_diagnostic_call, container)){
+        logger_log(&result.handle->logger, LOG_LEVEL_ERROR, "RaSTA call on diagnostic change", "error while creating thread");
+        exit(1);
+    }
+
+    pthread_mutex_unlock(&result.handle->notification_lock);
 }
 
-void on_handshake_complete_call(struct rasta_notification_result * result) {
+void * on_handshake_complete_call(void * container){
+    struct rasta_notification_result * result = (struct rasta_notification_result * )container;
+
     (*result->handle->notifications.on_handshake_complete)(result);
+
+    // notification handler completed, decrease amount of running threads
+    result->handle->running_notifications = result->handle->running_notifications -1;
+
+    //free container
+    rfree(container);
+
+    return NULL;
 }
 
 void fire_on_handshake_complete(struct rasta_notification_result result){
+    pthread_mutex_lock(&result.handle->notification_lock);
 
     if (result.handle->notifications.on_handshake_complete == NULL){
         // notification not set, do nothing
+        pthread_mutex_unlock(&result.handle->notification_lock);
         return;
     }
 
-    on_handshake_complete_call(&result);
+    // a thread will be started, increase amount of running notification threads
+    result.handle->running_notifications = result.handle->running_notifications + 1;
+
+    pthread_t caller_thread;
+
+    //create container
+    struct rasta_notification_result* container = rmalloc(sizeof(struct rasta_notification_result));
+    *container = result;
+
+    if (pthread_create(&caller_thread, NULL, on_handshake_complete_call, container)){
+        logger_log(&result.handle->logger, LOG_LEVEL_ERROR, "RaSTA call on handshake complete", "error while creating thread");
+        exit(1);
+    }
+
+    pthread_mutex_unlock(&result.handle->notification_lock);
 }
 
-void on_heartbeat_timeout_call(struct rasta_notification_result * result){
+void * on_heartbeat_timeout_call(void * container){
+    struct rasta_notification_result * result = (struct rasta_notification_result * )container;
+
     (*result->handle->notifications.on_heartbeat_timeout)(result);
+
+    // notification handler completed, decrease amount of running threads
+    result->handle->running_notifications = result->handle->running_notifications -1;
+
+    //free container
+    rfree(container);
+
+    return NULL;
 }
 
 void fire_on_heartbeat_timeout(struct rasta_notification_result result){
+    pthread_mutex_lock(&result.handle->notification_lock);
 
     if (result.handle->notifications.on_heartbeat_timeout == NULL){
         // notification not set, do nothing
+        pthread_mutex_unlock(&result.handle->notification_lock);
         return;
     }
 
-    on_heartbeat_timeout_call(&result);
+    // a thread will be started, increase amount of running notification threads
+    result.handle->running_notifications = result.handle->running_notifications + 1;
+
+    pthread_t caller_thread;
+
+    //create container
+    struct rasta_notification_result* container = rmalloc(sizeof(struct rasta_notification_result));
+    *container = result;
+
+    if (pthread_create(&caller_thread, NULL, on_heartbeat_timeout_call, container)){
+        logger_log(&result.handle->logger, LOG_LEVEL_ERROR, "RaSTA call on heartbeat timeout", "error while creating thread");
+        exit(1);
+    }
+
+    pthread_mutex_unlock(&result.handle->notification_lock);
 }
 
 void rasta_handle_manually_init(struct rasta_handle *h, struct RastaConfigInfo configuration, struct DictionaryArray accepted_versions , struct logger_t logger) {
@@ -185,6 +318,11 @@ void rasta_handle_manually_init(struct rasta_handle *h, struct RastaConfigInfo c
     h->notifications.on_diagnostic_notification = NULL;
     h->notifications.on_disconnection_request_received = NULL;
     h->notifications.on_redundancy_diagnostic_notification = NULL;
+
+    h->running_notifications = 0;
+
+    pthread_mutex_init(&h->notification_lock, 0);
+
 
     // init the list
     h->connections = rastalist_create(2);
@@ -297,6 +435,10 @@ void rasta_handle_init(struct rasta_handle *h, const char* config_file_path) {
     h->notifications.on_diagnostic_notification = NULL;
     h->notifications.on_disconnection_request_received = NULL;
     h->notifications.on_redundancy_diagnostic_notification = NULL;
+
+    h->running_notifications = 0;
+
+    pthread_mutex_init(&h->notification_lock, 0);
 
 
     // init the list

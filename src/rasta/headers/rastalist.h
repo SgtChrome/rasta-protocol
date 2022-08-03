@@ -10,8 +10,8 @@ extern "C" {  // only need to export C interface if
               // used by C++ source code
 #endif
 
+#include <pthread.h>
 #include <stdint.h>
-#include "event_system.h"
 #include "fifo.h"
 
 typedef enum {
@@ -107,27 +107,12 @@ struct diagnostic_interval {
     unsigned int t_alive_message_count;
 };
 
-/**
- * The data that is passed to most timed events.
- */
-struct timed_event_data {
-    void * handle;
-    int connection_index;
-};
-
 struct rasta_connection{
 
     /**
-     * the event operating the heartbeats on this connection
+     * the time when the last data packet or heartbeat was sent
      */
-    timed_event send_heartbeat_event;
-    struct timed_event_data heartbeat_carry_data;
-
-    /**
-     * the event watching the connection timeout
-     */
-    timed_event timeout_event;
-    struct timed_event_data timeout_carry_data;
+    uint32_t ts_last_message;
 
     /**
      * 1 if the process for sending heartbeats should be paused, otherwise 0
@@ -137,7 +122,7 @@ struct rasta_connection{
     /**
      * bool value if data from the send buffer is sent right now
      */
-    int is_sending;
+     int is_sending;
 
     /**
      * blocks heartbeats until connection handshake is complete
@@ -200,6 +185,11 @@ struct rasta_connection{
     unsigned int t_i;
 
     /**
+     * time (in ms since 1.1.1970) when the T_i interval started
+     */
+    uint32_t ti_start_time;
+
+    /**
      * the RaSTA connections sender identifier
      */
     uint32_t my_id;
@@ -235,6 +225,11 @@ struct rasta_connection{
     *   the error counters as specified in 5.5.5
     */
     struct rasta_error_counters errors;
+
+    /**
+     * allow access to specific connection cross thread
+     */
+    pthread_mutex_t lock;
 };
 
 struct RastaList {
@@ -242,6 +237,8 @@ struct RastaList {
 
     unsigned int size;
     unsigned int actual_size;
+
+    pthread_mutex_t list_lock;
 };
 
 /**
