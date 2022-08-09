@@ -134,6 +134,9 @@ struct DictionaryEntry config_get(struct RastaConfig * cfg, char key[256]);
  */
 void config_free(struct RastaConfig *cfg);
 
+
+struct RastaIPData extractIPData(char data[256], int arrayIndex);
+
 #ifdef __cplusplus
 }
 #endif
