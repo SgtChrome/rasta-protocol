@@ -31,13 +31,11 @@ int initUDPSender(struct internalUDPhandle *udp) {
 	hints.ai_next = NULL;
 
 	s = getaddrinfo(name, PORT, &hints, &result);
-	printf("%s:%s\n", name, PORT);
+
 	if (s != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
         exit(EXIT_FAILURE);
-    } else {
-		printf("Cool%s\n", result->ai_addr->sa_data);
-	}
+    }
 
 	// Creating socket file descriptor
 	int sfd = 0;
@@ -48,7 +46,7 @@ int initUDPSender(struct internalUDPhandle *udp) {
 		if (sfd == -1) {
 			continue;
 		} else {
-			printf("Sender socket found!%d\n", sfd);
+			//printf("Sender socket found!%d\n", sfd);
 		}
 	}
 	if (sfd < 0) {
@@ -59,24 +57,6 @@ int initUDPSender(struct internalUDPhandle *udp) {
 	printf("in function: %d", udp->sockfd);
 	udp->addrinfo = *result;
 
-	/* struct sockaddr_in servaddr;
-
-	bzero(&servaddr, sizeof(servaddr));
-
-	// Filling server information
-	servaddr.sin_family = AF_INET; // IPv4
-	servaddr.sin_addr.s_addr = INADDR_ANY;
-	servaddr.sin_port = htons(PORT);
-
-	// Bind the socket with the server address
-	if ( bind(udp.sockfd, (const struct sockaddr *)&servaddr,
-			sizeof(servaddr)) < 0 )
-	{
-		perror("bind failed");
-		exit(EXIT_FAILURE);
-	} else {
-		printf("Socket set up!\n");
-	} */
 	return 1;
 }
 
@@ -94,29 +74,3 @@ int sendMessageToOC(struct internalUDPhandle udp, char * message) {
 
 	return 1;
 }
-
-/* void startInternalReceiver(struct internalUDPhandle udp) {
-	int n;
-	n = recvfrom(udp.sockfd, (char *)buffer, MAXLINE,
-				MSG_WAITALL, ( struct sockaddr *) &cliaddr,
-				&len);
-	buffer[n] = '\0';
-	printf("Client : %s\n", buffer);
-} */
-
-// Driver code
-/* int main() {
-
-
-	n = recvfrom(sockfd, (char *)buffer, MAXLINE,
-				MSG_WAITALL, ( struct sockaddr *) &cliaddr,
-				&len);
-	buffer[n] = '\0';
-	printf("Client : %s\n", buffer);
-	sendto(sockfd, (const char *)hello, strlen(hello),
-		MSG_CONFIRM, (const struct sockaddr *) &cliaddr,
-			len);
-	printf("Hello message sent.\n");
-
-	return 0;
-} */

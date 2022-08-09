@@ -26,7 +26,7 @@ struct internalUDPhandle udpSender;
 struct internalUDPhandle udpReceiver;
 
 void onConnectionStateChange(struct rasta_notification_result *result) {
-    onConnectionStateChangeProxy(result, udpReceiver);
+    onConnectionStateChangeProxy(result, udpReceiver, udpSender);
 }
 void onHandshakeCompleted(struct rasta_notification_result *result) {
     onHandshakeCompletedProxy(result);
@@ -35,7 +35,7 @@ void onTimeout(struct rasta_notification_result *result) {
     onTimeoutProxy(result);
 }
 void onReceive(struct rasta_notification_result *result) {
- onReceiveProxy(result, udpSender);
+    onReceiveProxy(result, udpSender);
 }
 
 int main(){

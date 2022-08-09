@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include "internal.h"
 #include "myRasta.h"
+#include "config.h"
 
 #define CONFIG_PATH "../../../rasta_Interlocking.cfg"
 
@@ -18,15 +19,11 @@
 #define ID_S1 0x62
 #define ID_S2 0x63
 
-
-int client1 = 1;
-int client2 = 1;
-
 struct internalUDPhandle udpSender;
 struct internalUDPhandle udpReceiver;
 
 void onConnectionStateChange(struct rasta_notification_result *result) {
-    onConnectionStateChangeProxy(result, udpReceiver);
+    onConnectionStateChangeProxy(result, udpReceiver, udpSender);
 }
 void onHandshakeCompleted(struct rasta_notification_result *result) {
     onHandshakeCompletedProxy(result);
@@ -60,24 +57,63 @@ int main(){
     h.notifications.on_receive = onReceive;
     h.notifications.on_handshake_complete = onHandshakeCompleted;
     h.notifications.on_heartbeat_timeout = onTimeout;
+    printf("All notification handlers initiated\n");
 
     /* printf("->   Press Enter to connect\n");
     getchar(); */
-    printf("All notification handlers initiated\n");
 
     startInternalReceiver(udpReceiver, h);
     printf("Internal Receiver started\n");
 
 
-    sr_connect(&h,ID_R,toServer);
-    printf("Trying to connect to Client\n");
+    struct DictionaryEntry rastaIDsEntry = config_get(&h.config, "RASTA_IDs");
+    struct DictionaryEntry rastaIPsEntry = config_get(&h.config, "RASTA_IPs");
 
-    char *message = "left";
+    //check validity of config
+    if (rastaIPsEntry.value.array.count != rastaIDsEntry.value.array.count) {
+        printf("Wrong number of ids and ips\n");
+        exit(2);
+    }
 
-    int i;
-    for (i=0; 0<3; i=i+1) {
-        sendMessageToOC(udpSender, message);
-        sleep(1);
+    // read rasta clients this client is supposed to connect to from config
+    udpReceiver.connections = malloc(sizeof(struct rastaConnection) * rastaIPsEntry.value.array.count);
+    udpReceiver.connectionsCount = rastaIPsEntry.value.array.count;
+
+    if (rastaIPsEntry.type != DICTIONARY_ARRAY || rastaIPsEntry.value.array.count == 0) {
+        printf("Error in config\n");
+        exit(2);
+    }
+    else {
+        struct rastaConnection connection;
+
+        //check valid format
+        for (unsigned int i = 0; i < rastaIPsEntry.value.array.count; i++) {
+            connection.ipdata = extractIPData(rastaIPsEntry.value.array.data[i].c, i);
+            printf("Char: %s\n", rastaIDsEntry.value.array.data[i].c);
+            printf("Unsigned long: %lX\n", strtoul(rastaIDsEntry.value.array.data[i].c, NULL, 0));
+            connection.rastaID = (unsigned long) strtoul(rastaIDsEntry.value.array.data[i].c, NULL, 0);
+            if (connection.ipdata.port == 0) {
+                logger_log(&h.logger,LOG_LEVEL_ERROR, __FILE__, "RASTA_REDUNDANCY_CONNECTIONS may only contain strings in format ip:port or *:port");
+                rfree(rastaIPsEntry.value.array.data);
+                rastaIPsEntry.value.array.count = 0;
+                break;
+            }
+            udpReceiver.connections[i] = connection;
+        }
+    }
+
+    for (unsigned int i = 0; i < udpReceiver.connectionsCount; i++) {
+        printf("Client %d is: %s:%d\n", i, udpReceiver.connections[i].ipdata.ip,udpReceiver.connections[i].ipdata.port);
+    }
+
+    // Wait for everything to "settle"
+    sleep(2);
+    // go through all the collected ip address and try to connect to them
+    // TODO: New feature - try to reconnect on disconnect
+    for (unsigned int i = 0; i < udpReceiver.connectionsCount; i++) {
+        struct RastaIPData *test = getServerDataFromConfig(&udpReceiver.connections[i]);
+        printf("Trying to connect to Client %d on %s:%d\n with RastaID %lX", i, test[0].ip,test[0].port, udpReceiver.connections->rastaID);
+        sr_connect(&h, udpReceiver.connections->rastaID, test);
     }
 
     pause();

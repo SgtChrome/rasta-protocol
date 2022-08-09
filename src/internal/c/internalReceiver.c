@@ -18,7 +18,7 @@
 #define ID_S1 0x62
 
 typedef struct {
-    struct internalUDPhandle udp;
+    struct internalUDPhandle udpReceiver;
     struct rasta_handle * handle;
 } passHack;
 
@@ -51,59 +51,95 @@ int initUDPReceiver(struct internalUDPhandle *udp) {
 	return 1;
 }
 
+void informOCOfConnections() {
+
+}
+
+void sendMessage(struct rasta_handle *h, char *message, unsigned long remote_id) {
+	struct RastaMessageData messageData1;
+	allocateRastaMessageData(&messageData1, 1);
+	addRastaString(&messageData1,0,(char*) message);
+
+	sr_send(h, ID_S1, messageData1);
+}
+
 void *receiveMessages(void *pH) {
-	int len, n;
-		char buffer[MAXLINE];
-		passHack *actualHandlers = pH;
+	int n;
+	char buffer[MAXLINE];
+	passHack *actualHandlers = pH;
 
 	while (1) {
-		n = recvfrom(actualHandlers->udp.sockfd, (char *)buffer, MAXLINE,
+		n = recvfrom(actualHandlers->udpReceiver.sockfd, (char *)buffer, MAXLINE,
 					MSG_WAITALL, NULL, NULL);
 		if (n < 0) {
 			printf("Oh: %s\n", strerror(errno));
 			exit(EXIT_FAILURE);
 		}
 		buffer[n] = '\0';
-		printf("Client: %d - %s\n", n, buffer);
-
-		// temp remote ID
-		/* unsigned long remote_id = ID_S1;
-
-		struct RastaMessageData messageData1;
-		allocateRastaMessageData(&messageData1, 1);
-
-		addRastaString(&messageData1,0,(char*)buffer);
-
-		sr_send(actualHandlers->handle, ID_S1, messageData1); */
+		printf("Client message arrived: %d - %s\n", n, buffer);
 	}
+	//buffer
+	// don't know if this actually works
+	/* if (actualHandlers->udp.rastaConnection == 1) {
+		sendMessage(actualHandlers->handle, buffer);
+	} else {
+		printf("No Rasta connection available\n");
+	} */
+
+    int i = 0;
+    char *t = strtok (buffer, ";");
+    char *array[3];
+
+    while (t != NULL)
+    {
+        array[i++] = t;
+        t = strtok (NULL, ";");
+    }
+
+    for (i = 0; i < 3; ++i) {
+		printf("%s\n", array[i]);
+	}
+
+	unsigned long rastaid = strtoul(array[1], NULL, 0);
+	printf("%lX", rastaid);
+
+    if (array[0] == 0) {
+		// send message to rasta client
+		sendMessage(actualHandlers->handle, array[2], rastaid);
+	} else {
+        // convert integer: in ASCII code, the numbers (digits) start from 48
+        switch ((int)*array[2] - 48)
+        {
+        case REQUEST_RECONNECT:
+            for (unsigned int i = 0; i < actualHandlers->udpReceiver.connectionsCount; i++) {
+                if (actualHandlers->udpReceiver.connections[i].rastaID == rastaid) {
+					if (actualHandlers->udpReceiver.connections[i].connectionUp == 0) {
+						printf("Reconnect request received for %lX\n", rastaid);
+						sr_connect(actualHandlers->handle, (unsigned long) array[1], getServerDataFromConfig(&actualHandlers->udpReceiver.connections[i]));
+					} else {
+						printf("Connection to %lX appears to be established already\n", rastaid);
+					}
+					break;
+				}
+            }
+            break;
+
+        default:
+            break;
+        }
+    }
 }
 
-int startInternalReceiver(struct internalUDPhandle udp, struct rasta_handle handle) {
+int startInternalReceiver(struct internalUDPhandle udpReceiver, struct rasta_handle handle) {
 	pthread_t caller_thread;
 
 	passHack *pH = malloc(sizeof *pH);
 
 	//create container
-    pH->udp = udp;
+    pH->udpReceiver = udpReceiver;
     pH->handle = &handle;
 
 	pthread_create(&caller_thread, NULL, receiveMessages, pH);
+
 	return 1;
 }
-
-// Driver code
-/* int main() {
-
-
-	n = recvfrom(sockfd, (char *)buffer, MAXLINE,
-				MSG_WAITALL, ( struct sockaddr *) &cliaddr,
-				&len);
-	buffer[n] = '\0';
-	printf("Client : %s\n", buffer);
-	sendto(sockfd, (const char *)hello, strlen(hello),
-		MSG_CONFIRM, (const struct sockaddr *) &cliaddr,
-			len);
-	printf("Hello message sent.\n");
-
-	return 0;
-} */

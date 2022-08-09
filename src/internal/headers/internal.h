@@ -1,9 +1,18 @@
 #include "rastahandle.h"
 #include <netdb.h>
+#include "config.h"
+
+struct rastaConnection {
+    struct RastaIPData ipdata;
+    unsigned long rastaID;
+    int connectionUp;
+};
 
 struct internalUDPhandle {
     int sockfd;
+    struct rastaConnection *connections;
     struct addrinfo addrinfo;
+    int connectionsCount;
 };
 
 int initUDPReceiver(struct internalUDPhandle*);
