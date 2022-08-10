@@ -64,7 +64,7 @@ int main(){
     getchar(); */
     printf("All notification handlers initiated\n");
 
-    startInternalReceiver(udpReceiver, h);
+    startInternalReceiver(udpReceiver, udpSender, h);
     printf("Internal Receiver started\n");
 
     //pause();
