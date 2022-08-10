@@ -19,6 +19,7 @@
 
 typedef struct {
     struct internalUDPhandle udpReceiver;
+    struct internalUDPhandle udpSender;
     struct rasta_handle * handle;
 } passHack;
 
@@ -55,12 +56,13 @@ void informOCOfConnections() {
 
 }
 
-void sendMessage(struct rasta_handle *h, char *message, unsigned long remote_id) {
+void sendMessage(struct rasta_handle *h, unsigned long remote_id, char *message) {
 	struct RastaMessageData messageData1;
 	allocateRastaMessageData(&messageData1, 1);
 	addRastaString(&messageData1,0,(char*) message);
 
-	sr_send(h, ID_S1, messageData1);
+	sr_send(h, remote_id, messageData1);
+	printf("Rasta message sent to %lX: %s", remote_id, message);
 }
 
 void *receiveMessages(void *pH) {
@@ -76,7 +78,7 @@ void *receiveMessages(void *pH) {
 			exit(EXIT_FAILURE);
 		}
 		buffer[n] = '\0';
-		printf("Client message arrived: %d - %s\n", n, buffer);
+		printf("Internal message arrived: %d - %s\n", n, buffer);
 	}
 	//buffer
 	// don't know if this actually works
@@ -86,6 +88,8 @@ void *receiveMessages(void *pH) {
 		printf("No Rasta connection available\n");
 	} */
 
+	// Messages structure:
+	// 0/1 Message/Internal; RastaID; message
     int i = 0;
     char *t = strtok (buffer, ";");
     char *array[3];
@@ -105,7 +109,8 @@ void *receiveMessages(void *pH) {
 
     if (array[0] == 0) {
 		// send message to rasta client
-		sendMessage(actualHandlers->handle, array[2], rastaid);
+		printf("Message kind: %d", array[0]);
+		sendMessage(actualHandlers->handle, rastaid, array[2]);
 	} else {
         // convert integer: in ASCII code, the numbers (digits) start from 48
         switch ((int)*array[2] - 48)
@@ -123,6 +128,17 @@ void *receiveMessages(void *pH) {
 				}
             }
             break;
+		case REQUEST_CONNECTIONLIST:
+			for (unsigned int i = 0; i < actualHandlers->udpReceiver.connectionsCount; i++) {
+				struct RastaIPData *data = &actualHandlers->udpReceiver.connections[i].ipdata;
+				char *message;
+				asprintf(&message, "%lX, %d, %c",
+						actualHandlers->udpReceiver.connections[i].rastaID,
+						actualHandlers->udpReceiver.connections[i].connectionUp,
+						data[0].ip);
+				sendMessageToOC(actualHandlers->udpSender, message);
+			}
+			break;
 
         default:
             break;
@@ -130,13 +146,14 @@ void *receiveMessages(void *pH) {
     }
 }
 
-int startInternalReceiver(struct internalUDPhandle udpReceiver, struct rasta_handle handle) {
+int startInternalReceiver(struct internalUDPhandle udpReceiver, struct internalUDPhandle udpSender, struct rasta_handle handle) {
 	pthread_t caller_thread;
 
 	passHack *pH = malloc(sizeof *pH);
 
 	//create container
     pH->udpReceiver = udpReceiver;
+	pH->udpSender = udpSender;
     pH->handle = &handle;
 
 	pthread_create(&caller_thread, NULL, receiveMessages, pH);

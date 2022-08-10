@@ -62,7 +62,7 @@ int main(){
     /* printf("->   Press Enter to connect\n");
     getchar(); */
 
-    startInternalReceiver(udpReceiver, h);
+    startInternalReceiver(udpReceiver, udpSender, h);
     printf("Internal Receiver started\n");
 
 
@@ -112,10 +112,11 @@ int main(){
     // TODO: New feature - try to reconnect on disconnect
     for (unsigned int i = 0; i < udpReceiver.connectionsCount; i++) {
         struct RastaIPData *test = getServerDataFromConfig(&udpReceiver.connections[i]);
-        printf("Trying to connect to Client %d on %s:%d\n with RastaID %lX", i, test[0].ip,test[0].port, udpReceiver.connections->rastaID);
+        printf("Trying to connect to Client %d on %s:%d with RastaID %lX\n", i, test[0].ip,test[0].port, udpReceiver.connections->rastaID);
         sr_connect(&h, udpReceiver.connections->rastaID, test);
     }
-
+    //sleep(2);
+    //sendMessage(&h, ID_S1, "Main testmessage");
     pause();
     printf("Starting clean up\n");
     sr_cleanup(&h);
