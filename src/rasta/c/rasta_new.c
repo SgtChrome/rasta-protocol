@@ -1630,10 +1630,16 @@ void sr_connect(struct rasta_handle *handle, unsigned long id, struct RastaIPDat
 }
 
 void sr_send(struct rasta_handle *h, unsigned long remote_id, struct RastaMessageData app_messages){
+    printf("test0\n");
 
     struct rasta_connection *connection = rastalist_getConnectionByRemote(&h->connections,remote_id);
 
-    if (connection == 0) return;
+    if (connection == 0) {
+        printf("No connection found with rastaid %lX\n", remote_id);
+        return;
+    } else {
+        printf("Test1\n");
+    }
 
     pthread_mutex_lock(&connection->lock);
 
@@ -1646,7 +1652,7 @@ void sr_send(struct rasta_handle *h, unsigned long remote_id, struct RastaMessag
             pthread_mutex_unlock(&connection->lock);
             return;
         }
-
+        printf("Test2\n");
         for (unsigned int i = 0; i < app_messages.count; ++i) {
             struct RastaByteArray msg;
             msg = app_messages.data_array[i];
