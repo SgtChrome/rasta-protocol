@@ -67,7 +67,7 @@ int main(){
     startInternalReceiver(udpReceiver, h);
     printf("Internal Receiver started\n");
 
-    //pause();
+    pause();
     printf("test\n");
     getchar();
     printf("Starting clean up\n");
