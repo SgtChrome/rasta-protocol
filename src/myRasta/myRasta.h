@@ -10,11 +10,17 @@ void onReceiveProxy(struct rasta_notification_result *result, struct internalUDP
 
 struct RastaIPData * getServerDataFromConfig(struct rastaConnection *connection);
 
+void sendMessage(struct rasta_handle *h, unsigned long remote_id, char *message);
+
 typedef enum {
     /**
      * Request restart
      */
-            REQUEST_RECONNECT
+            REQUEST_RECONNECT,
+    /**
+     * Request list of connections
+     */
+            REQUEST_CONNECTIONLIST,
 } message_from_oc;
 
 

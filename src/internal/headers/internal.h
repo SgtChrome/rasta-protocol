@@ -19,7 +19,7 @@ int initUDPReceiver(struct internalUDPhandle*);
 int initUDPSender(struct internalUDPhandle*);
 
 int sendMessageToOC(struct internalUDPhandle, char * message);
-int startInternalReceiver(struct internalUDPhandle, struct rasta_handle);
+int startInternalReceiver(struct internalUDPhandle, struct internalUDPhandle, struct rasta_handle*);
 
 /* typedef void(*on__internal_receive_ptr)(char *result);
 

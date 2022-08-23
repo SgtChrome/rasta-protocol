@@ -48,14 +48,14 @@ void notifyOCAboutConnectionChange(struct rasta_notification_result *result, str
 }
 
 void onConnectionStateChangeProxy(struct rasta_notification_result *result, struct internalUDPhandle udpReceiver, struct internalUDPhandle udpSender) {
-    printf("\n Connectionstate change (remote: %lu)", result->connection.remote_id);
+    printf("\n Connectionstate change (remote: %d)", result->connection.remote_id);
     char *message;
 
     switch (result->connection.current_state) {
         case RASTA_CONNECTION_CLOSED:
             printf("\nCONNECTION_CLOSED \n\n");
             setConnection(0, result, udpReceiver);
-            asprintf(&message, "1, %c, connection down", result->connection.my_id);
+            asprintf(&message, "1,%d,%d", result->connection.my_id, RASTA_CONNECTION_CLOSED);
             sendMessageToOC(udpSender, message);
             break;
         case RASTA_CONNECTION_START:
@@ -64,13 +64,13 @@ void onConnectionStateChangeProxy(struct rasta_notification_result *result, stru
         case RASTA_CONNECTION_DOWN:
             printf("\nCONNECTION_DOWN \n\n");
             setConnection(0, result, udpReceiver);
-            asprintf(&message, "1, %c, connection down", result->connection.my_id);
+            asprintf(&message, "1,%d,%d", result->connection.my_id, RASTA_CONNECTION_DOWN);
             sendMessageToOC(udpSender, message);
             break;
         case RASTA_CONNECTION_UP:
             printf("\nCONNECTION_UP \n\n");
             setConnection(1, result, udpReceiver);
-            asprintf(&message, "1, %c, connection up", result->connection.my_id);
+            asprintf(&message, "1,%d,%d", result->connection.my_id, RASTA_CONNECTION_UP);
             sendMessageToOC(udpSender, message);
             // use if message source is important
             // if (result->connection.my_id == ID_S1) { //Client 1

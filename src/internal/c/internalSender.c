@@ -46,7 +46,7 @@ int initUDPSender(struct internalUDPhandle *udp) {
 		if (sfd == -1) {
 			continue;
 		} else {
-			//printf("Sender socket found!%d\n", sfd);
+			printf("Sender socket found!%d\n", sfd);
 		}
 	}
 	if (sfd < 0) {
@@ -70,7 +70,7 @@ int sendMessageToOC(struct internalUDPhandle udp, char * message) {
         printf("Oh: %s\n", strerror(errno));
         exit(EXIT_FAILURE);
     }
-	printf("Message sent: Code %d - %s\n", n, message);
+	//printf("Message sent: %d - %s\n", n, message);
 
 	return 1;
 }
