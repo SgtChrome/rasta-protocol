@@ -820,6 +820,7 @@ void handle_hb(struct rasta_receive_handle *h, struct rasta_connection *connecti
 
         // if client receives HB in START -> disconnect and close
         if (connection->role == RASTA_ROLE_CLIENT){
+            logger_log(h->logger, LOG_LEVEL_INFO, "RaSTA HANDLE: Heartbeat", "DISCONNECTED: client receives hb in start");
             sr_close_connection(connection, h->handle, h->mux, h->info, RASTA_DISC_REASON_UNEXPECTEDTYPE,0);
         }
 
@@ -912,6 +913,7 @@ void handle_data(struct rasta_receive_handle *h, struct rasta_connection *connec
     if (sr_sn_in_seq(connection, receivedPacket)){
         if (connection->current_state == RASTA_CONNECTION_START){
             // received data in START -> disconnect and close
+            logger_log(h->logger, LOG_LEVEL_INFO, "RaSTA HANDLE: Data", "DISCONNECTED: received data in start");
             sr_close_connection(connection,h->handle,h->mux,h->info, RASTA_DISC_REASON_UNEXPECTEDTYPE ,0);
         } else if (connection->current_state == RASTA_CONNECTION_UP){
             // sn_in_seq == true -> check cts_in_seq
@@ -937,7 +939,7 @@ void handle_data(struct rasta_receive_handle *h, struct rasta_connection *connec
 
 
             } else{
-                logger_log(h->logger, LOG_LEVEL_INFO, "RaSTA HANDLE: Data", "CTS not in SEQ");
+                logger_log(h->logger, LOG_LEVEL_INFO, "RaSTA HANDLE: Data", "Disconnected CTS not in SEQ");
 
                 // increase cs error counter
                 connection->errors.cs++;
@@ -960,6 +962,7 @@ void handle_data(struct rasta_receive_handle *h, struct rasta_connection *connec
 
         if (connection->current_state == RASTA_CONNECTION_START){
             // received data in START -> disconnect and close
+            logger_log(h->logger, LOG_LEVEL_INFO, "RaSTA HANDLE: Data", "DISCONNECTED: received data in start");
             sr_close_connection(connection,h->handle,h->mux,h->info, RASTA_DISC_REASON_UNEXPECTEDTYPE ,0);
         } else if (connection->current_state == RASTA_CONNECTION_RETRRUN || connection->current_state == RASTA_CONNECTION_UP){
             // increase SN error counter
@@ -1086,10 +1089,12 @@ void handle_retrdata(struct rasta_receive_handle *h, struct rasta_connection *co
 
         if (connection->current_state == RASTA_CONNECTION_UP){
             // close connection
+            logger_log(h->logger, LOG_LEVEL_INFO, "RaSTA HANDLE: Heartbeat", "DISCONNECTED: current state is already set");
             sr_close_connection(connection,h->handle,h->mux,h->info,RASTA_DISC_REASON_UNEXPECTEDTYPE,0);
         } else if (connection->current_state == RASTA_CONNECTION_RETRRUN){
             if (!sr_cts_in_seq(connection,h->config,receivedPacket)){
                 // cts not in seq -> close connection
+                logger_log(h->logger, LOG_LEVEL_INFO, "RaSTA HANDLE: Heartbeat", "DISCONNECTED: cts not in seq");
                 sr_close_connection(connection,h->handle,h->mux,h->info,RASTA_DISC_REASON_PROTOCOLERROR,0);
             } else{
                 //cts is in seq -> add data to receive buffer
