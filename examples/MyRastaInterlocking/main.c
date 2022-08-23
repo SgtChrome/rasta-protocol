@@ -62,7 +62,7 @@ int main(){
     /* printf("->   Press Enter to connect\n");
     getchar(); */
 
-    startInternalReceiver(udpReceiver, udpSender, h);
+    startInternalReceiver(udpReceiver, udpSender, &h);
     printf("Internal Receiver started\n");
 
 
@@ -115,8 +115,9 @@ int main(){
         printf("Trying to connect to Client %d on %s:%d with RastaID %lX\n", i, test[0].ip,test[0].port, udpReceiver.connections->rastaID);
         sr_connect(&h, udpReceiver.connections->rastaID, test);
     }
-    //sleep(2);
-    //sendMessage(&h, ID_S1, "Main testmessage");
+
+    sleep(2);
+    sendMessage(&h, ID_S1, "Main testmessage");
     pause();
     printf("Starting clean up\n");
     sr_cleanup(&h);
