@@ -106,6 +106,8 @@ void onReceiveProxy(struct rasta_notification_result *result, struct internalUDP
 
     printf("Forwarding to OC\n");
 
+    /* char * message;
+    asprintf(&message, "0;%lX;%s", p.id, p.appMessage.bytes); */
     sendMessageToOC(udpSender, p.appMessage.bytes);
 
 }

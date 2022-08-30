@@ -13,11 +13,7 @@
 #include "myRasta.h"
 #include "config.h"
 
-#define CONFIG_PATH "../../../rasta_Interlocking.cfg"
-
-#define ID_R 0x61
-#define ID_S1 0x62
-#define ID_S2 0x63
+#define CONFIG_PATH "../../../rasta_client.cfg"
 
 struct internalUDPhandle udpSender;
 struct internalUDPhandle udpReceiver;
@@ -48,10 +44,6 @@ int main(){
     toServer[0].port = 8888;
     toServer[1].port = 8889;
 
-    printf("Server at %s:%d and %s:%d\n", toServer[0].ip, toServer[0].port, toServer[1].ip, toServer[1].port);
-
-    printf("->   S1 (ID = 0x%lX)\n", (unsigned long)ID_S1);
-
     sr_init_handle(&h, CONFIG_PATH);
     h.notifications.on_connection_state_change = onConnectionStateChange;
     h.notifications.on_receive = onReceive;
@@ -64,7 +56,6 @@ int main(){
 
     startInternalReceiver(udpReceiver, udpSender, &h);
     printf("Internal Receiver started\n");
-
 
     struct DictionaryEntry rastaIDsEntry = config_get(&h.config, "RASTA_IDs");
     struct DictionaryEntry rastaIPsEntry = config_get(&h.config, "RASTA_IPs");
@@ -106,6 +97,10 @@ int main(){
         printf("Client %d is: %s:%d\n", i, udpReceiver.connections[i].ipdata.ip,udpReceiver.connections[i].ipdata.port);
     }
 
+    printf("Server at %s:%d and %s:%d\n", toServer[0].ip, toServer[0].port, toServer[1].ip, toServer[1].port);
+
+    printf("->   S1 (ID = 0x%lX)\n", (unsigned long) config_get(&h.config, "RASTA_ID").value.number);
+
     // Wait for everything to "settle"
     sleep(2);
     // go through all the collected ip address and try to connect to them
@@ -115,9 +110,18 @@ int main(){
         printf("Trying to connect to Client %d on %s:%d with RastaID %lX\n", i, test[0].ip,test[0].port, udpReceiver.connections->rastaID);
         sr_connect(&h, udpReceiver.connections->rastaID, test);
     }
-
+    /* printf("Testi %d\n", h.config.logger.type);
+    printf("Testi %d\n", h.config.logger.log_file);
+    printf("Testi %d\n", h.config.logger.max_log_level);
+    printf("Testi %d\n", h.config.logger.max_log_level); */
+    // Testcode
+    // 0/1 Message/Internal; RastaID_Sender; RastaID_Receiver; message
     sleep(2);
-    sendMessage(&h, ID_S1, "Main testmessage");
+    char *message;
+    asprintf(&message, "0;%x;%lX;startup", config_get(&h.config, "RASTA_ID").value.number, udpReceiver.connections[0].rastaID);
+    sendRastaMessage(&h, udpReceiver.connections[0].rastaID, message);
+    free(message);
+
     pause();
     printf("Starting clean up\n");
     sr_cleanup(&h);

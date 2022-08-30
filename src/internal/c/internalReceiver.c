@@ -56,7 +56,7 @@ void informOCOfConnections() {
 
 }
 
-void sendMessage(struct rasta_handle *h, unsigned long remote_id, char *message) {
+void sendRastaMessage(struct rasta_handle *h, unsigned long remote_id, char *message) {
 	struct RastaMessageData messageData1;
 	allocateRastaMessageData(&messageData1, 1);
 	addRastaString(&messageData1,0,(char*) message);
@@ -82,16 +82,16 @@ void *receiveMessages(void *pH) {
 		//buffer
 		// don't know if this actually works
 		/* if (actualHandlers->udp.rastaConnection == 1) {
-			sendMessage(actualHandlers->handle, buffer);
+			sendRastaMessage(actualHandlers->handle, buffer);
 		} else {
 			printf("No Rasta connection available\n");
 		} */
 
 		// Messages structure:
-		// 0/1 Message/Internal; RastaID; message
+		// 0/1 Message/Internal; RastaID_sender; RastID_receiver, message
 		int i = 0;
-		char *t = strtok (buffer, ";");
-		char *array[3];
+		char *t = strtok(buffer, ";");
+		char *array[4];
 
 		while (t != NULL)
 		{
@@ -99,31 +99,35 @@ void *receiveMessages(void *pH) {
 			t = strtok (NULL, ";");
 		}
 
-		printf("Raw id is %s\n", array[1]);
-		unsigned long rastaid = strtoul(array[1], NULL, 0);
-		printf("RastaId is %lX\n", rastaid);
+		unsigned long rastaid_rec = strtoul(array[2], NULL, 0);
+		printf("RastaReceiver is %lX\n", rastaid_rec);
 
 		// convert integer: in ASCII code, the numbers (digits) start from 48
-		printf("%s\n", array[0]);
 		int internal = atoi(array[0]);
-		printf("%d\n", internal);
+		printf("Internal yes or no: %d\n", internal);
 
 		if (internal == 0) {
+			// Rasta_Receiver
+			printf("Own ID is %lX, from Message is \n", config_get(&actualHandlers->handle->config, "RASTA_ID").value.number); //, strtoul(array[2], NULL, 0));
+
 			// send message to rasta client
 			printf("Message kind: %d\n", internal);
-			sendMessage(actualHandlers->handle, rastaid, array[2]);
+			char *message;
+			asprintf(&message, "0;%lX;%lX;%s", config_get(&actualHandlers->handle->config, "RASTA_ID").value.number,  rastaid_rec, array[3]);
+			sendRastaMessage(actualHandlers->handle, rastaid_rec, message);
 		} else {
 			int code = (int)*array[2] - 48;
+			printf("Code: %d\n", code);
 			switch (code)
 			{
 			case REQUEST_RECONNECT:
 				for (unsigned int i = 0; i < actualHandlers->udpReceiver.connectionsCount; i++) {
-					if (actualHandlers->udpReceiver.connections[i].rastaID == rastaid) {
+					if (actualHandlers->udpReceiver.connections[i].rastaID == rastaid_rec) {
 						if (actualHandlers->udpReceiver.connections[i].connectionUp == 0) {
-							printf("Reconnect request received for %lX\n", rastaid);
+							printf("Reconnect request received for %lX\n", rastaid_rec);
 							sr_connect(actualHandlers->handle, (unsigned long) array[1], getServerDataFromConfig(&actualHandlers->udpReceiver.connections[i]));
 						} else {
-							printf("Connection to %lX appears to be established already\n", rastaid);
+							printf("Connection to %lX appears to be established already\n", rastaid_rec);
 						}
 						break;
 					}
@@ -144,7 +148,7 @@ void *receiveMessages(void *pH) {
 					strcat(response, clientinfo);
 				}
 				sendMessageToOC(actualHandlers->udpSender, response);
-				printf("%s", response);
+				printf("Client: %s\n", response);
 				break;
 
 			default:
