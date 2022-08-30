@@ -127,6 +127,9 @@ add_library(rasta SHARED
 # Link system libraries for librasta
 target_link_libraries(rasta rt pthread)
 
+file(MAKE_DIRECTORY build/logs)
+file(TOUCH build/logs/ouput.log)
+
 set_property(
     TARGET rasta
     PROPERTY PUBLIC_HEADER
