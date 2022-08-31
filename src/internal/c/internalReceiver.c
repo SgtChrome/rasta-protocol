@@ -79,13 +79,6 @@ void *receiveMessages(void *pH) {
 		}
 		buffer[n] = '\0';
 		printf("Internal message arrived: %d - %s\n", n, buffer);
-		//buffer
-		// don't know if this actually works
-		/* if (actualHandlers->udp.rastaConnection == 1) {
-			sendMessage(actualHandlers->handle, buffer);
-		} else {
-			printf("No Rasta connection available\n");
-		} */
 
 		// Messages structure:
 		// 0/1 Message/Internal; RastaID; message
