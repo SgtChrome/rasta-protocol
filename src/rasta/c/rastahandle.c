@@ -404,7 +404,7 @@ void rasta_handle_init(struct rasta_handle *h, const char* config_file_path) {
         //h->redlogger = logger_init(LOG_LEVEL_NONE,LOGGER_TYPE_CONSOLE);
         h->redlogger = h->logger;
 
-        if (h->logger.type == LOGGER_TYPE_FILE) {
+        if (h->logger.type == LOGGER_TYPE_FILE || h->logger.type == LOGGER_TYPE_BOTH) {
             // need to set log file
             if (logger_file.type == DICTIONARY_STRING) {
                 logger_set_log_file(&h->logger, logger_file.value.string.c);

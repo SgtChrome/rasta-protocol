@@ -10,7 +10,7 @@ void onReceiveProxy(struct rasta_notification_result *result, struct internalUDP
 
 struct RastaIPData * getServerDataFromConfig(struct rastaConnection *connection);
 
-void sendMessage(struct rasta_handle *h, unsigned long remote_id, char *message);
+void sendRastaMessage(struct rasta_handle *h, unsigned long remote_id, char *message);
 
 typedef enum {
     /**
