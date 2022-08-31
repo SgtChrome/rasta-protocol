@@ -12,7 +12,7 @@
 #include "internal.h"
 #include "myRasta.h"
 
-#define CONFIG_PATH "../../../rasta_Point.cfg"
+#define CONFIG_PATH "../../../rasta_client.cfg"
 
 #define ID_R 0x61
 #define ID_S1 0x62
