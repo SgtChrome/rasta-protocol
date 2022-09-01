@@ -83,7 +83,7 @@ void *receiveMessages(void *pH) {
 		//buffer
 		// don't know if this actually works
 		/* if (actualHandlers->udp.rastaConnection == 1) {
-			sendRastaMessage(actualHandlers->handle, buffer);
+			sendMessage(actualHandlers->handle, buffer);
 		} else {
 			printf("No Rasta connection available\n");
 		} */
