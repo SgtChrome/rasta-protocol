@@ -89,7 +89,7 @@ void *receiveMessages(void *pH) {
 		} */
 
 		// Messages structure:
-		// 0/1 Message/Internal; RastaID_sender; RastID_receiver, message
+		// 0/1 Message/Internal; RastaID_sender; RastaID_receiver, orderID-message
 		int i = 0;
 		char *t = strtok(buffer, ";");
 		char *array[4];
@@ -105,14 +105,14 @@ void *receiveMessages(void *pH) {
 
 		// convert integer: in ASCII code, the numbers (digits) start from 48
 		int internal = atoi(array[0]);
-		printf("Internal yes or no: %d\n", internal);
+		//printf("Internal yes or no: %d\n", internal);
 
 		if (internal == 0) {
 			// Rasta_Receiver
-			printf("Own ID is %lX, from Message is \n", config_get(&actualHandlers->handle->config, "RASTA_ID").value.number); //, strtoul(array[2], NULL, 0));
+			//printf("Own ID is %lX, from Message is \n", config_get(&actualHandlers->handle->config, "RASTA_ID").value.number); //, strtoul(array[2], NULL, 0));
 
 			// send message to rasta client
-			printf("Message kind: %d\n", internal);
+			//printf("Message kind: %d\n", internal);
 			char *message;
 			asprintf(&message, "0;%lX;%lX;%s", config_get(&actualHandlers->handle->config, "RASTA_ID").value.number,  rastaid_rec, array[3]);
 			sendRastaMessage(actualHandlers->handle, rastaid_rec, message);
