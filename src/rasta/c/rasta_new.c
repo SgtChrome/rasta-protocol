@@ -766,15 +766,15 @@ void handle_conresp(struct rasta_receive_handle *h, struct rasta_connection *con
         }
         else {
             //Server don't receive conresp
+            logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HANDLE: ConnectionResponse", "Server received ConnectionResponse - send Disconnection Request");
             sr_close_connection(connection,h->handle,h->mux,h->info,RASTA_DISC_REASON_UNEXPECTEDTYPE, 0);
 
-            logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HANDLE: ConnectionResponse", "Server received ConnectionResponse - send Disconnection Request");
             return;
         }
     }
     else if (connection->current_state == RASTA_CONNECTION_RETRREQ || connection->current_state == RASTA_CONNECTION_RETRRUN || connection->current_state == RASTA_CONNECTION_UP) {
-        sr_close_connection(connection,h->handle,h->mux,h->info,RASTA_DISC_REASON_UNEXPECTEDTYPE, 0);
         logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HANDLE: ConnectionResponse", "Received ConnectionResponse in wrong state - send DisconnectionRequest");
+        sr_close_connection(connection,h->handle,h->mux,h->info,RASTA_DISC_REASON_UNEXPECTEDTYPE, 0);
         return;
     }
     //other states don't change
@@ -939,7 +939,7 @@ void handle_data(struct rasta_receive_handle *h, struct rasta_connection *connec
 
 
             } else{
-                logger_log(h->logger, LOG_LEVEL_INFO, "RaSTA HANDLE: Data", "Disconnected CTS not in SEQ");
+                logger_log(h->logger, LOG_LEVEL_INFO, "RaSTA HANDLE: Data", "Disconnected: CTS not in SEQ");
 
                 // increase cs error counter
                 connection->errors.cs++;
@@ -955,7 +955,7 @@ void handle_data(struct rasta_receive_handle *h, struct rasta_connection *connec
                 connection->ts_r = receivedPacket.timestamp;
             } else{
                 // retransmission failed, disconnect and close
-            logger_log(h->logger, LOG_LEVEL_INFO, "RaSTA HANDLE: Data", "DISCONNECTED: retransmission failed");
+                logger_log(h->logger, LOG_LEVEL_INFO, "RaSTA HANDLE: Data", "DISCONNECTED: retransmission failed");
                 sr_close_connection(connection,h->handle,h->mux,h->info, RASTA_DISC_REASON_PROTOCOLERROR ,0);
             }
         }
@@ -997,7 +997,7 @@ void handle_retrreq(struct rasta_receive_handle *h, struct rasta_connection *con
 
 
         if (connection->current_state == RASTA_CONNECTION_RETRRUN) {
-            logger_log(h->logger, LOG_LEVEL_INFO, "RaSTA receive", "RetrReq: got RetrReq packet in RetrRun mode. Disconnected");
+            logger_log(h->logger, LOG_LEVEL_INFO, "RaSTA receive", "Disconnected: RetrReq - got RetrReq packet in RetrRun mode. Disconnected");
 
             // send DiscReq to client
             sr_close_connection(connection,h->handle,h->mux,h->info,RASTA_DISC_REASON_RETRFAILED, 0);
@@ -1075,7 +1075,7 @@ void handle_retrresp(struct rasta_receive_handle *h, struct rasta_connection *co
         connection->cs_r = connection->sn_t -1;
         connection->cts_r = cur_timestamp();
     } else {
-        logger_log(h->logger, LOG_LEVEL_ERROR, "RaSTA receive", "received packet type retr_resp, but not in state retr_req");
+        logger_log(h->logger, LOG_LEVEL_ERROR, "RaSTA receive", "Disconnected: received packet type retr_resp, but not in state retr_req");
         sr_close_connection(connection,h->handle,h->mux,h->info,RASTA_DISC_REASON_UNEXPECTEDTYPE, 0);
     }
 }
@@ -1721,6 +1721,7 @@ void sr_disconnect(struct rasta_handle *h, unsigned long remote_id) {
     if (con == 0) return;
 
     pthread_mutex_lock(&con->lock);
+    logger_log(&h->logger, LOG_LEVEL_DEBUG, "RaSTA Disconnect", "Disconnection method");
     sr_close_connection(con,h,&h->mux,h->config.values.general,RASTA_DISC_REASON_USERREQUEST,0);
     pthread_mutex_unlock(&con->lock);
 }
