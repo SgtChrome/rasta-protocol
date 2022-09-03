@@ -109,7 +109,7 @@ int main(){
     // 0/1 Message/Internal; RastaID_Sender; RastaID_Receiver; message
     sleep(2);
     char *message;
-    asprintf(&message, "0;%x;%lX;startup", config_get(&h.config, "RASTA_ID").value.number, udpReceiver.connections[0].rastaID);
+    asprintf(&message, "0;%x;%lX;startup-startup", config_get(&h.config, "RASTA_ID").value.number, udpReceiver.connections[0].rastaID);
     sendRastaMessage(&h, udpReceiver.connections[0].rastaID, message);
     free(message);
 

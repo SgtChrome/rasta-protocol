@@ -622,7 +622,7 @@ void handle_conreq(struct rasta_receive_handle *h, struct rasta_connection *conn
 
         // check received packet (5.5.2)
         if (!sr_check_packet(&new_con,h->logger,h->config,receivedPacket, "RaSTA HANDLE: ConnectionRequest")){
-            logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HANDLE: ConnectionRequest", "Packet is not valid");
+            logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HANDLE: ConnectionRequest", "Disconnected: Packet is not valid");
             sr_close_connection(&new_con,h->handle,h->mux,h->info,RASTA_DISC_REASON_PROTOCOLERROR,0);
             return;
         }
@@ -774,7 +774,7 @@ void handle_conresp(struct rasta_receive_handle *h, struct rasta_connection *con
     }
     else if (connection->current_state == RASTA_CONNECTION_RETRREQ || connection->current_state == RASTA_CONNECTION_RETRRUN || connection->current_state == RASTA_CONNECTION_UP) {
         sr_close_connection(connection,h->handle,h->mux,h->info,RASTA_DISC_REASON_UNEXPECTEDTYPE, 0);
-        logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HANDLE: ConnectionResponse", "Received ConnectionResponse in wrong state - semd DisconnectionRequest");
+        logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HANDLE: ConnectionResponse", "Received ConnectionResponse in wrong state - send DisconnectionRequest");
         return;
     }
     //other states don't change
@@ -807,7 +807,7 @@ void handle_hb(struct rasta_receive_handle *h, struct rasta_connection *connecti
 
         // if SN not in Seq -> disconnect and close connection
         if (!sr_sn_in_seq(connection, receivedPacket)){
-            logger_log(h->logger, LOG_LEVEL_INFO, "RaSTA HANDLE: Heartbeat", "Connection HB SN not in Seq");
+            logger_log(h->logger, LOG_LEVEL_INFO, "RaSTA HANDLE: Heartbeat", "Disconnected: Connection HB SN not in Seq");
 
             if (connection->role == RASTA_ROLE_SERVER){
                 // SN not in Seq
@@ -849,7 +849,7 @@ void handle_hb(struct rasta_receive_handle *h, struct rasta_connection *connecti
             connection->ti_start_time = cur_timestamp();
             return;
         } else{
-            logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HANDLE: Heartbeat", "Heartbeat is invalid");
+            logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HANDLE: Heartbeat", "Disconnected: Heartbeat is invalid");
 
             // sequence number check failed -> disconnect
             sr_close_connection(connection,h->handle,h->mux,h->info,RASTA_DISC_REASON_PROTOCOLERROR,0);
@@ -955,6 +955,7 @@ void handle_data(struct rasta_receive_handle *h, struct rasta_connection *connec
                 connection->ts_r = receivedPacket.timestamp;
             } else{
                 // retransmission failed, disconnect and close
+            logger_log(h->logger, LOG_LEVEL_INFO, "RaSTA HANDLE: Data", "DISCONNECTED: retransmission failed");
                 sr_close_connection(connection,h->handle,h->mux,h->info, RASTA_DISC_REASON_PROTOCOLERROR ,0);
             }
         }
@@ -996,7 +997,7 @@ void handle_retrreq(struct rasta_receive_handle *h, struct rasta_connection *con
 
 
         if (connection->current_state == RASTA_CONNECTION_RETRRUN) {
-            logger_log(h->logger, LOG_LEVEL_INFO, "RaSTA receive", "RetrReq: got RetrReq packet in RetrRun mode. closing connection.");
+            logger_log(h->logger, LOG_LEVEL_INFO, "RaSTA receive", "RetrReq: got RetrReq packet in RetrRun mode. Disconnected");
 
             // send DiscReq to client
             sr_close_connection(connection,h->handle,h->mux,h->info,RASTA_DISC_REASON_RETRFAILED, 0);
@@ -1110,7 +1111,7 @@ void handle_retrdata(struct rasta_receive_handle *h, struct rasta_connection *co
         }
     } else{
         // sn not in seq
-        logger_log(h->logger, LOG_LEVEL_DEBUG, "Process RetrData", "SN not in Seq");
+        logger_log(h->logger, LOG_LEVEL_DEBUG, "Process RetrData", "Disconnected: SN not in Seq");
         logger_log(h->logger, LOG_LEVEL_DEBUG, "Process RetrData", "SN_PDU=%lu, SN_R=%lu", receivedPacket.sequence_number, connection->sn_r);
         if (connection->current_state == RASTA_CONNECTION_UP){
             // close connection
@@ -1586,7 +1587,7 @@ void sr_connect(struct rasta_handle *handle, unsigned long id, struct RastaIPDat
 
     for (unsigned int i = 0; i < handle->connections.size; i++) {
         //TODO: Error handling
-        if (handle->connections.data[i].remote_id == id) return;
+        //if (handle->connections.data[i].remote_id == id) return;
     }
     //TODO: const ports in redundancy? (why no dynamic port length)
     redundancy_mux_add_channel(&handle->mux,id,channels);
@@ -1635,7 +1636,7 @@ void sr_connect(struct rasta_handle *handle, unsigned long id, struct RastaIPDat
 }
 
 void sr_send(struct rasta_handle *h, unsigned long remote_id, struct RastaMessageData app_messages){
-    printf("test0\n");
+    //printf("test0\n");
 
     struct rasta_connection *connection = rastalist_getConnectionByRemote(&h->connections,remote_id);
 
