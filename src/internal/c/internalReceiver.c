@@ -61,7 +61,7 @@ void sendRastaMessage(struct rasta_handle *h, unsigned long remote_id, char *mes
 	allocateRastaMessageData(&messageData1, 1);
 	addRastaString(&messageData1,0,(char*) message);
 	printf("Converted String and prepare to send to %lX: %s\n", remote_id, message);
-	logger_log(&h->logger, LOG_LEVEL_INFO, "Forward OC Message", message);
+	logger_log(&h->logger, LOG_LEVEL_INFO, "Order", message);
 	sr_send(h, remote_id, messageData1);
 	printf("Rasta message sent to %lX: %s\n", remote_id, message);
 }
