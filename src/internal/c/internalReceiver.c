@@ -47,7 +47,7 @@ int initUDPReceiver(struct internalUDPhandle *udp) {
 		perror("bind failed");
 		exit(EXIT_FAILURE);
 	} else {
-		printf("Socket set up!\n");
+		//printf("Socket set up!\n");
 	}
 	return 1;
 }
@@ -83,7 +83,7 @@ void *receiveMessages(void *pH) {
 		//buffer
 		// don't know if this actually works
 		/* if (actualHandlers->udp.rastaConnection == 1) {
-			sendMessage(actualHandlers->handle, buffer);
+			sendRastaMessage(actualHandlers->handle, buffer);
 		} else {
 			printf("No Rasta connection available\n");
 		} */

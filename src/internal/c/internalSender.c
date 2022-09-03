@@ -46,7 +46,7 @@ int initUDPSender(struct internalUDPhandle *udp) {
 		if (sfd == -1) {
 			continue;
 		} else {
-			printf("Sender socket found!%d\n", sfd);
+			//printf("Sender socket found!%d\n", sfd);
 		}
 	}
 	if (sfd < 0) {
@@ -54,7 +54,7 @@ int initUDPSender(struct internalUDPhandle *udp) {
 		exit(EXIT_FAILURE);
 	}
 	udp->sockfd = sfd;
-	printf("in function: %d", udp->sockfd);
+	//printf("in function: %d", udp->sockfd);
 	udp->addrinfo = *result;
 
 	return 1;

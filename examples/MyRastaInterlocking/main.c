@@ -36,13 +36,6 @@ int main(){
     initUDPSender(&udpSender);
 
     struct rasta_handle h;
-    struct RastaIPData toServer[2];
-
-    strcpy(toServer[0].ip, "10.152.2.20");
-    strcpy(toServer[1].ip, "10.152.2.20");
-
-    toServer[0].port = 8888;
-    toServer[1].port = 8889;
 
     sr_init_handle(&h, CONFIG_PATH);
     h.notifications.on_connection_state_change = onConnectionStateChange;
@@ -50,9 +43,6 @@ int main(){
     h.notifications.on_handshake_complete = onHandshakeCompleted;
     h.notifications.on_heartbeat_timeout = onTimeout;
     printf("All notification handlers initiated\n");
-
-    /* printf("->   Press Enter to connect\n");
-    getchar(); */
 
     startInternalReceiver(udpReceiver, udpSender, &h);
     printf("Internal Receiver started\n");
@@ -80,8 +70,8 @@ int main(){
         //check valid format
         for (unsigned int i = 0; i < rastaIPsEntry.value.array.count; i++) {
             connection.ipdata = extractIPData(rastaIPsEntry.value.array.data[i].c, i);
-            printf("Char: %s\n", rastaIDsEntry.value.array.data[i].c);
-            printf("Unsigned long: %lX\n", strtoul(rastaIDsEntry.value.array.data[i].c, NULL, 0));
+            //printf("Char: %s\n", rastaIDsEntry.value.array.data[i].c);
+            //printf("Unsigned long: %lX\n", strtoul(rastaIDsEntry.value.array.data[i].c, NULL, 0));
             connection.rastaID = (unsigned long) strtoul(rastaIDsEntry.value.array.data[i].c, NULL, 0);
             if (connection.ipdata.port == 0) {
                 logger_log(&h.logger,LOG_LEVEL_ERROR, __FILE__, "RASTA_REDUNDANCY_CONNECTIONS may only contain strings in format ip:port or *:port");
@@ -97,9 +87,10 @@ int main(){
         printf("Client %d is: %s:%d\n", i, udpReceiver.connections[i].ipdata.ip,udpReceiver.connections[i].ipdata.port);
     }
 
-    printf("Server at %s:%d and %s:%d\n", toServer[0].ip, toServer[0].port, toServer[1].ip, toServer[1].port);
+    struct RastaIPData *thisServer = &h.config.values.redundancy.connections.data[0];
 
-    printf("->   S1 (ID = 0x%lX)\n", (unsigned long) config_get(&h.config, "RASTA_ID").value.number);
+    printf("Server at %s:%d\n", thisServer[0].ip, thisServer[0].port);
+    printf("->ID = 0x%lX\n", (unsigned long) config_get(&h.config, "RASTA_ID").value.number);
 
     // Wait for everything to "settle"
     sleep(2);
