@@ -52,16 +52,12 @@ int initUDPReceiver(struct internalUDPhandle *udp) {
 	return 1;
 }
 
-void informOCOfConnections() {
-
-}
-
 void sendRastaMessage(struct rasta_handle *h, unsigned long remote_id, char *message) {
 	struct RastaMessageData messageData1;
 	allocateRastaMessageData(&messageData1, 1);
 	addRastaString(&messageData1,0,(char*) message);
 	printf("Converted String and prepare to send to %lX: %s\n", remote_id, message);
-	logger_log(&h->logger, LOG_LEVEL_INFO, "Order", message);
+	logger_log(&h->logger, LOG_LEVEL_INFO, "Rasta_SENT", message);
 	sr_send(h, remote_id, messageData1);
 	printf("Rasta message sent to %lX: %s\n", remote_id, message);
 }
