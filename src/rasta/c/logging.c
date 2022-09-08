@@ -74,9 +74,12 @@ char * get_log_message_string(log_level max_log_level, log_level level, char * l
     gettimeofday(&tv, NULL);
 
     unsigned long long millisecondsSinceEpoch =
-            (unsigned long long)(tv.tv_sec) * 1000 +
-            (unsigned long long)(tv.tv_usec) / 1000;
-
+            // milliseconds
+            //(unsigned long long)(tv.tv_sec) * 1000 +
+            //(unsigned long long)(tv.tv_usec) / 1000;
+            // microseconds
+            (unsigned long long)(tv.tv_sec) * 1000000 +
+            (unsigned long long)(tv.tv_usec);
 
     // generate log level string
     char level_str[30];
