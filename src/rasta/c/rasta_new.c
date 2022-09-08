@@ -347,6 +347,33 @@ int sr_cts_in_seq(struct rasta_connection* con, struct RastaConfigInfoSending cf
 }
 
 /**
+ * calculates cts_in_seq for the given @p packet as in 5.5.6.3
+ * @param con the connection that is used
+ * @param packet the packet
+ * @return cts_in_seq (bool)
+ */
+int sr_cts_in_seq_with_logging(struct rasta_connection* con, struct rasta_receive_handle* h, struct RastaPacket packet){
+
+    if (packet.type == RASTA_TYPE_HB || packet.type == RASTA_TYPE_DATA || packet.type == RASTA_TYPE_RETRDATA){
+        // cts_in_seq := 0 <= CTS_PDU – CTS_R < t_i
+        printf("cts: %d, last: %d d: %d", packet.confirmed_timestamp, con->cts_r, abs(packet.confirmed_timestamp - con->cts_r));
+        if (!((packet.confirmed_timestamp >= con->cts_r) &&
+                (packet.confirmed_timestamp - con->cts_r < h->config.t_max))) {
+                    logger_log(&h->handle->logger, LOG_LEVEL_INFO, "Debug CTS",
+                               "Packet timestamp: %d, timestamp last packet: %d, difference:  %d",
+                               packet.confirmed_timestamp, con->cts_r, abs(packet.confirmed_timestamp - con->cts_r));
+                }
+        // WARNING we modified the cts in seq check, out of sequence by 50 ms is tolerated
+        printf("check1: %d, check2: %d, check3: %d", (packet.confirmed_timestamp >= con->cts_r), (abs(packet.confirmed_timestamp - con->cts_r) < 50), (packet.confirmed_timestamp - con->cts_r < h->config.t_max));
+        return (((packet.confirmed_timestamp >= con->cts_r) || abs(packet.confirmed_timestamp - con->cts_r) < 50) &&
+                (abs(packet.confirmed_timestamp - con->cts_r) < h->config.t_max));
+    } else {
+        // for any other type return always true
+        return 1;
+    }
+}
+
+/**
  * calculates sn_in_seq for the given @p packet
  * @param con the connection that is used
  * @param packet the packet
@@ -920,7 +947,7 @@ void handle_data(struct rasta_receive_handle *h, struct rasta_connection *connec
 
             logger_log(h->logger, LOG_LEVEL_INFO, "RaSTA HANDLE: Data", "SN in SEQ");
 
-            if (sr_cts_in_seq(connection,h->config, receivedPacket)){
+            if (sr_cts_in_seq_with_logging(connection, h, receivedPacket)){
                 logger_log(h->logger, LOG_LEVEL_INFO, "RaSTA HANDLE: Data", "CTS in SEQ");
                 // valid data packet received
                 // read application messages and push into queue
