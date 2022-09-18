@@ -43,19 +43,13 @@ int main(){
     initUDPSender(&udpSender);
 
     struct rasta_handle h;
-    struct RastaIPData toServer[2];
-
-    strcpy(toServer[0].ip, "10.152.2.20");
-    strcpy(toServer[1].ip, "10.152.2.20");
-
-    toServer[0].port = 8888;
-    toServer[1].port = 8889;
-
-    printf("Server at %s:%d and %s:%d\n", toServer[0].ip, toServer[0].port, toServer[1].ip, toServer[1].port);
-
-    printf("->   S1 (ID = 0x%lX)\n", (unsigned long)ID_S1);
 
     sr_init_handle(&h, CONFIG_PATH);
+
+    struct RastaIPData *thisServer = &h.config.values.redundancy.connections.data[0];
+    printf("Server at %s:%d\n", thisServer[0].ip, thisServer[0].port);
+    printf("->ID = 0x%lX\n", (unsigned long) config_get(&h.config, "RASTA_ID").value.number);
+
     h.notifications.on_connection_state_change = onConnectionStateChange;
     h.notifications.on_receive = onReceive;
     h.notifications.on_handshake_complete = onHandshakeCompleted;

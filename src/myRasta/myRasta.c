@@ -100,7 +100,7 @@ void onReceiveProxy(struct rasta_notification_result *result, struct internalUDP
     printf("Received data from Client %lu\n", result->connection.remote_id);
 
     p = sr_get_received_data(result->handle,&result->connection);
-    logger_log(&result->handle->logger, LOG_LEVEL_INFO, "Rasta_RECEIVED", "%s", p.id, p.appMessage.bytes);
+    logger_log(&result->handle->logger, LOG_LEVEL_INFO, "Rasta_RECEIVED", "%s", p.appMessage.bytes);
 
     sendMessageToOC(udpSender, p.appMessage.bytes);
 }
