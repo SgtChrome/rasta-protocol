@@ -45,6 +45,7 @@ void fifo_push(fifo_t * fifo, void * element){
 
     if (fifo->size == fifo->max_size){
         pthread_mutex_unlock(&fifo->lock);
+        printf("ERROR: Logging buffer full!\n");
         return;
     }
 

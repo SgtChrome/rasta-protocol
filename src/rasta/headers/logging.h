@@ -23,7 +23,7 @@ extern "C" {  // only need to export C interface if
 /**
  * maximum amount of log messages in the buffer
  */
-#define LOGGER_BUFFER_SIZE 10
+#define LOGGER_BUFFER_SIZE 100
 
 /**
  * maximum size of log messages in bytes
