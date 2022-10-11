@@ -54,16 +54,12 @@ int main(){
     h.notifications.on_receive = onReceive;
     h.notifications.on_handshake_complete = onHandshakeCompleted;
     h.notifications.on_heartbeat_timeout = onTimeout;
-    /* printf("->   Press Enter to connect\n");
-    getchar(); */
-    printf("All notification handlers initiated\n");
 
     startInternalReceiver(udpReceiver, udpSender, &h);
-    printf("Internal Receiver started\n");
+    logger_log(&h.logger,LOG_LEVEL_DEBUG, "Startup", "All notification handlers initiated\n");
 
     pause();
-    printf("test\n");
-    getchar();
+
     printf("Starting clean up\n");
     sr_cleanup(&h);
 

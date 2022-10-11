@@ -57,6 +57,14 @@ void onConnectionStateChangeProxy(struct rasta_notification_result *result, stru
             setConnection(0, result, udpReceiver);
             asprintf(&message, "1;%d;%d", result->connection.my_id, RASTA_CONNECTION_CLOSED);
             sendMessageToOC(udpSender, message);
+            // This code could be used to reconnect, doesn't make sense for experiment
+            // check if we are server
+            /* if (result->connection.my_id == 1) {
+                // wait for heartbeat timer to expire
+                printf("Attempting reconnect in %f seconds", (float) (config_get(&result->handle->config, "RASTA_T_H").value.number / 1000));
+                sleep(config_get(&result->handle->config, "RASTA_T_H").value.number / 1000);
+                sr_connect(result->handle, result->connection.remote_id, getRastaIPDataFromID(udpReceiver, result->connection.remote_id));
+            } */
             break;
         case RASTA_CONNECTION_START:
             printf("\nCONNECTION_START \n\n");
@@ -97,7 +105,7 @@ void onTimeoutProxy(struct rasta_notification_result *result){
 void onReceiveProxy(struct rasta_notification_result *result, struct internalUDPhandle udpSender) {
     rastaApplicationMessage p;
 
-    printf("Received data from Client %lu\n", result->connection.remote_id);
+    //logger_log(&result->handle->logger, LOG_LEVEL_DEBUG, "Rasta_ReceiveProxy", "Received data from Client %lu\n", result->connection.remote_id);
 
     p = sr_get_received_data(result->handle,&result->connection);
     logger_log(&result->handle->logger, LOG_LEVEL_INFO, "Rasta_RECEIVED", "%s", p.appMessage.bytes);

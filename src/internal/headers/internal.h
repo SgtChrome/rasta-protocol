@@ -15,6 +15,8 @@ struct internalUDPhandle {
     int connectionsCount;
 };
 
+struct RastaIPData * getRastaIPDataFromID(struct internalUDPhandle, unsigned long rastaID);
+
 int initUDPReceiver(struct internalUDPhandle*);
 int initUDPSender(struct internalUDPhandle*);
 

@@ -18,6 +18,7 @@
 int initUDPSender(struct internalUDPhandle *udp) {
 	int s;
 	const char* name = "object_controller";
+	//const char* name = "127.0.0.1";
 
 	struct addrinfo *result, *rp;
 
@@ -54,7 +55,6 @@ int initUDPSender(struct internalUDPhandle *udp) {
 		exit(EXIT_FAILURE);
 	}
 	udp->sockfd = sfd;
-	//printf("in function: %d", udp->sockfd);
 	udp->addrinfo = *result;
 
 	return 1;

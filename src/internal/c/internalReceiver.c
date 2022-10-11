@@ -24,6 +24,16 @@ typedef struct {
 } passHack;
 
 
+struct RastaIPData * getRastaIPDataFromID(struct internalUDPhandle udpReceiver, unsigned long rastaID) {
+	for (unsigned int i = 0; i < udpReceiver.connectionsCount; i++) {
+		if (udpReceiver.connections[i].rastaID == rastaID) {
+			return &udpReceiver.connections[i].ipdata;
+		}
+	};
+	return -1;
+};
+
+
 int initUDPReceiver(struct internalUDPhandle *udp) {
 	// Creating socket file descriptor
 	if ( (udp->sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
@@ -41,14 +51,10 @@ int initUDPReceiver(struct internalUDPhandle *udp) {
 	servaddr.sin_port = htons(PORT);
 
 	// Bind the socket with the server address
-	if ( bind(udp->sockfd, (const struct sockaddr *)&servaddr,
-			sizeof(servaddr)) < 0 )
-	{
-		perror("bind failed");
-		exit(EXIT_FAILURE);
-	} else {
-		//printf("Socket set up!\n");
-	}
+	if ( bind(udp->sockfd, (const struct sockaddr *)&servaddr, sizeof(servaddr)) < 0 ) {
+			perror("bind failed");
+			exit(EXIT_FAILURE);
+		}
 	return 1;
 }
 
@@ -56,10 +62,9 @@ void sendRastaMessage(struct rasta_handle *h, unsigned long remote_id, char *mes
 	struct RastaMessageData messageData1;
 	allocateRastaMessageData(&messageData1, 1);
 	addRastaString(&messageData1,0,(char*) message);
-	printf("Converted String and prepare to send to %lX: %s\n", remote_id, message);
-	logger_log(&h->logger, LOG_LEVEL_INFO, "Rasta_SENT", message);
 	sr_send(h, remote_id, messageData1);
-	printf("Rasta message sent to %lX: %s\n", remote_id, message);
+	logger_log(&h->logger, LOG_LEVEL_INFO, "Rasta_SENT", message);
+	//logger_log(&h->logger, LOG_LEVEL_DEBUG, "Rasta_SENT", "Rasta message sent to %lX: %s\n", remote_id, message);
 }
 
 void *receiveMessages(void *pH) {
@@ -71,18 +76,11 @@ void *receiveMessages(void *pH) {
 		n = recvfrom(actualHandlers->udpReceiver.sockfd, (char *)buffer, MAXLINE,
 					MSG_WAITALL, NULL, NULL);
 		if (n < 0) {
-			printf("Oh: %s\n", strerror(errno));
+			logger_log(&actualHandlers->handle->logger, LOG_LEVEL_ERROR, "Receive_Internal", "Error: %s", strerror(errno));
 			exit(EXIT_FAILURE);
 		}
 		buffer[n] = '\0';
-		printf("Internal message arrived: %d - %s\n", n, buffer);
-		//buffer
-		// don't know if this actually works
-		/* if (actualHandlers->udp.rastaConnection == 1) {
-			sendRastaMessage(actualHandlers->handle, buffer);
-		} else {
-			printf("No Rasta connection available\n");
-		} */
+		logger_log(&actualHandlers->handle->logger, LOG_LEVEL_DEBUG, "Receive_Internal", "Internal message arrived: %d bytes - %s", n, buffer);
 
 		// Messages structure:
 		// 0/1 Message/Internal; RastaID_sender; RastaID_receiver, orderID-message
@@ -97,24 +95,22 @@ void *receiveMessages(void *pH) {
 		}
 
 		unsigned long rastaid_rec = strtoul(array[2], NULL, 0);
-		printf("RastaReceiver is %lX\n", rastaid_rec);
 
 		// convert integer: in ASCII code, the numbers (digits) start from 48
 		int internal = atoi(array[0]);
-		//printf("Internal yes or no: %d\n", internal);
 
 		if (internal == 0) {
 			// Rasta_Receiver
-			//printf("Own ID is %lX, from Message is \n", config_get(&actualHandlers->handle->config, "RASTA_ID").value.number); //, strtoul(array[2], NULL, 0));
+			//logger_log(&h->logger, LOG_LEVEL_DEBUG, "Receive_Internal", "Own ID is %lX, from Message is \n", config_get(&actualHandlers->handle->config, "RASTA_ID").value.number);
 
 			// send message to rasta client
-			//printf("Message kind: %d\n", internal);
 			char *message;
 			asprintf(&message, "0;%lX;%lX;%s", config_get(&actualHandlers->handle->config, "RASTA_ID").value.number,  rastaid_rec, array[3]);
 			sendRastaMessage(actualHandlers->handle, rastaid_rec, message);
+			free(message);
 		} else {
 			int code = (int)*array[2] - 48;
-			printf("Code: %d\n", code);
+			logger_log(&actualHandlers->handle->logger, LOG_LEVEL_DEBUG, "Receive_Internal", "Code: %d", code);
 			switch (code)
 			{
 			case REQUEST_RECONNECT:
@@ -132,7 +128,7 @@ void *receiveMessages(void *pH) {
 				break;
 			case REQUEST_CONNECTIONLIST:
 				/* char *response = "1;NULL;"; */
-				printf("Generating connectionlist\n");
+				logger_log(&actualHandlers->handle->logger, LOG_LEVEL_DEBUG, "Receive_Internal", "Generating connectionlist");
 				char response[100];
 				sprintf(response, "1;0;%d;", REQUEST_CONNECTIONLIST);
 				for (unsigned int i = 0; i < actualHandlers->udpReceiver.connectionsCount; i++) {
@@ -145,7 +141,7 @@ void *receiveMessages(void *pH) {
 					strcat(response, clientinfo);
 				}
 				sendMessageToOC(actualHandlers->udpSender, response);
-				printf("Client: %s\n", response);
+				logger_log(&actualHandlers->handle->logger, LOG_LEVEL_DEBUG, "Receive_Internal", "Client: %s", response);
 				break;
 
 			default:
