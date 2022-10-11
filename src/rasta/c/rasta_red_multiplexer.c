@@ -777,6 +777,7 @@ void redundancy_mux_set_config_id(redundancy_mux * mux, unsigned long id){
 
 void redundancy_mux_send(redundancy_mux * mux, struct RastaPacket data){
     logger_log(&mux->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux send", "sending a data packet to id 0x%lX", data.receiver_id);
+    //logger_log(&mux->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux send", "Sending CS: %d, Type: %d, Sending CTS:%d\n", data.confirmed_sequence_number, data.type, data.confirmed_timestamp);
 
     // get the channel to the remote entity by the data's received_id
     rasta_redundancy_channel * receiver = redundancy_mux_get_channel(mux, data.receiver_id);
