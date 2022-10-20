@@ -3,7 +3,8 @@
 #include "config.h"
 
 struct rastaConnection {
-    struct RastaIPData ipdata;
+    struct RastaIPData blueIPdata;
+    struct RastaIPData greyIPdata;
     unsigned long rastaID;
     int connectionUp;
 };

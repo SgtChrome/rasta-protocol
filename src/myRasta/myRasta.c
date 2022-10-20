@@ -23,12 +23,11 @@ struct RastaIPData * getServerDataFromConfig(struct rastaConnection *connection)
     // because it doesn't work if put in sr_connect right away
     struct RastaIPData *serverData = rmalloc(sizeof(struct RastaIPData) *2);
 
-    strcpy(serverData[0].ip, connection->ipdata.ip);
-    strcpy(serverData[1].ip, connection->ipdata.ip);
-
-    // assumes the redundancy ports are always 8888 and 8889
-    serverData[0].port = 8888;
-    serverData[1].port = 8889;
+    // this is needlessly complicated, but fix other time
+    strcpy(serverData[0].ip, connection->blueIPdata.ip);
+    strcpy(serverData[1].ip, connection->greyIPdata.ip);
+    serverData[0].port = connection->blueIPdata.port;
+    serverData[1].port = connection->greyIPdata.port;
 
     return serverData;
 }
@@ -77,6 +76,7 @@ void onConnectionStateChangeProxy(struct rasta_notification_result *result, stru
             break;
         case RASTA_CONNECTION_UP:
             printf("\nCONNECTION_UP \n\n");
+            fflush(stdout);
             setConnection(1, result, udpReceiver);
             asprintf(&message, "1;%d;%d", result->connection.my_id, RASTA_CONNECTION_UP);
             sendMessageToOC(udpSender, message);

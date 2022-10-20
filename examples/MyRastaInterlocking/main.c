@@ -50,14 +50,14 @@ int main(){
     struct DictionaryEntry rastaIPsEntry = config_get(&h.config, "RASTA_IPs");
 
     //check validity of config
-    if (rastaIPsEntry.value.array.count != rastaIDsEntry.value.array.count) {
+    if (rastaIPsEntry.value.array.count != rastaIDsEntry.value.array.count * 2) {
         logger_log(&h.logger,LOG_LEVEL_ERROR, "Startup", "Wrong number of ids and ips\n");
         exit(2);
     }
 
     // read rasta clients this client is supposed to connect to from config
-    udpReceiver.connections = malloc(sizeof(struct rastaConnection) * rastaIPsEntry.value.array.count);
-    udpReceiver.connectionsCount = rastaIPsEntry.value.array.count;
+    udpReceiver.connections = malloc(sizeof(struct rastaConnection) * rastaIDsEntry.value.array.count);
+    udpReceiver.connectionsCount = rastaIDsEntry.value.array.count;
 
     if (rastaIPsEntry.type != DICTIONARY_ARRAY || rastaIPsEntry.value.array.count == 0) {
         logger_log(&h.logger,LOG_LEVEL_ERROR, "Startup", "Error in config\n");
@@ -66,11 +66,13 @@ int main(){
     else {
         struct rastaConnection connection;
 
-        //check valid format
-        for (unsigned int i = 0; i < rastaIPsEntry.value.array.count; i++) {
-            connection.ipdata = extractIPData(rastaIPsEntry.value.array.data[i].c, i);
+        // check valid format
+        // loop over id's. Every ID has two IP entries belonging to it
+        for (unsigned int i = 0; i < rastaIDsEntry.value.array.count; i++) {
+            connection.blueIPdata = extractIPData(rastaIPsEntry.value.array.data[2*i].c, i);
+            connection.greyIPdata = extractIPData(rastaIPsEntry.value.array.data[2*i+1].c, i);
             connection.rastaID = (unsigned long) strtoul(rastaIDsEntry.value.array.data[i].c, NULL, 0);
-            if (connection.ipdata.port == 0) {
+            if (connection.blueIPdata.port == 0 || connection.greyIPdata.port == 0) {
                 logger_log(&h.logger,LOG_LEVEL_ERROR, __FILE__, "RASTA_REDUNDANCY_CONNECTIONS may only contain strings in format ip:port or *:port");
                 rfree(rastaIPsEntry.value.array.data);
                 rastaIPsEntry.value.array.count = 0;
@@ -81,7 +83,9 @@ int main(){
     }
 
     for (unsigned int i = 0; i < udpReceiver.connectionsCount; i++) {
-        logger_log(&h.logger,LOG_LEVEL_ERROR, "Startup", "Client %d is: %s:%d\n", i, udpReceiver.connections[i].ipdata.ip,udpReceiver.connections[i].ipdata.port);
+        logger_log(&h.logger,LOG_LEVEL_INFO, "Startup", "Client %d is: %s:%d and %s:%d\n",
+            i, udpReceiver.connections[i].blueIPdata.ip, udpReceiver.connections[i].blueIPdata.port,
+            udpReceiver.connections[i].greyIPdata.ip, udpReceiver.connections[i].greyIPdata.port);
     }
 
     struct RastaIPData *thisServer = &h.config.values.redundancy.connections.data[0];
@@ -100,11 +104,13 @@ int main(){
     }
     // Testcode
     // 0/1 Message/Internal; RastaID_Sender; RastaID_Receiver; message
+
+    /*
     sleep(2);
     char *message;
     asprintf(&message, "0;%x;%lX;0-startup", config_get(&h.config, "RASTA_ID").value.number, udpReceiver.connections[0].rastaID);
     sendRastaMessage(&h, udpReceiver.connections[0].rastaID, message);
-    free(message);
+    free(message); */
 
     pause();
     printf("Starting clean up\n");
