@@ -24,14 +24,14 @@ typedef struct {
 } passHack;
 
 
-struct RastaIPData * getRastaIPDataFromID(struct internalUDPhandle udpReceiver, unsigned long rastaID) {
+/* struct RastaIPData * getRastaIPDataFromID(struct internalUDPhandle udpReceiver, unsigned long rastaID) {
 	for (unsigned int i = 0; i < udpReceiver.connectionsCount; i++) {
 		if (udpReceiver.connections[i].rastaID == rastaID) {
 			return &udpReceiver.connections[i].ipdata;
 		}
 	};
 	return -1;
-};
+}; */
 
 
 int initUDPReceiver(struct internalUDPhandle *udp) {
@@ -126,13 +126,12 @@ void *receiveMessages(void *pH) {
 					}
 				}
 				break;
-			case REQUEST_CONNECTIONLIST:
-				/* char *response = "1;NULL;"; */
+ 			/*case REQUEST_CONNECTIONLIST:
 				logger_log(&actualHandlers->handle->logger, LOG_LEVEL_DEBUG, "Receive_Internal", "Generating connectionlist");
 				char response[100];
 				sprintf(response, "1;0;%d;", REQUEST_CONNECTIONLIST);
 				for (unsigned int i = 0; i < actualHandlers->udpReceiver.connectionsCount; i++) {
-					struct RastaIPData *data = &actualHandlers->udpReceiver.connections[i].ipdata;
+					struct RastaIPData *data = &actualHandlers->udpReceiver.connections[i].blueIPdata;
 					char clientinfo[100];
 					sprintf(clientinfo, "%lX,%d,%s-",
 							actualHandlers->udpReceiver.connections[i].rastaID,
@@ -142,7 +141,7 @@ void *receiveMessages(void *pH) {
 				}
 				sendMessageToOC(actualHandlers->udpSender, response);
 				logger_log(&actualHandlers->handle->logger, LOG_LEVEL_DEBUG, "Receive_Internal", "Client: %s", response);
-				break;
+				break; */
 
 			default:
 				break;
