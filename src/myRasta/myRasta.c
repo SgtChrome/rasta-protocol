@@ -107,8 +107,21 @@ void onReceiveProxy(struct rasta_notification_result *result, struct internalUDP
 
     //logger_log(&result->handle->logger, LOG_LEVEL_DEBUG, "Rasta_ReceiveProxy", "Received data from Client %lu\n", result->connection.remote_id);
 
-    p = sr_get_received_data(result->handle,&result->connection);
-    logger_log(&result->handle->logger, LOG_LEVEL_INFO, "Rasta_RECEIVED", "%s", p.appMessage.bytes);
+    p = sr_get_received_data(result->handle, &result->connection);
+
+	// prepare logging
+	int protocoltype = p.appMessage.bytes[0];
+    int state = p.appMessage.bytes[43];
+	printf("prot, state: %d, %d\n", protocoltype, state);
+    char orderID[p.appMessage.length - 47];
+	memset(orderID, '\0', sizeof(orderID));
+
+    if (protocoltype == 0x40) {
+		//u8strncpy(orderID, message + 47, sizeof(message)-1);
+        strncpy(orderID, p.appMessage.bytes + 47, p.appMessage.length - 1);
+    } else if (protocoltype == 0x30) {
+        strncpy(orderID, p.appMessage.bytes + 47, p.appMessage.length - 1);
+    }
 
     sendMessageToOC(udpSender, p.appMessage.bytes);
 }
