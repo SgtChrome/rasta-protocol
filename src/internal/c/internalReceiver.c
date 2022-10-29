@@ -86,15 +86,13 @@ void sendRastaMessage(struct rasta_handle *h, unsigned long remote_id, char *mes
 	// prepare logging
 	int protocoltype = message[0];
     int state = message[43];
-	printf("prot, state: %d, %d\n", protocoltype, state);
     char orderID[bufferlength - 47];
-	memset(orderID, '\0', sizeof(orderID));
 
     if (protocoltype == 0x40) {
 		//u8strncpy(orderID, message + 47, sizeof(message)-1);
-        strncpy(orderID, message + 47, bufferlength - 1);
+        strncpy(orderID, message + 47, bufferlength - 47);
     } else if (protocoltype == 0x30) {
-        strncpy(orderID, message + 47, bufferlength - 1);
+        strncpy(orderID, message + 47, bufferlength - 47);
     }
 
 	sr_send(h, remote_id, messageData1);
@@ -106,7 +104,6 @@ void sendRastaMessage(struct rasta_handle *h, unsigned long remote_id, char *mes
 void *receiveMessages(void *pH) {
 	int n;
 	char buffer[MAXLINE];
-	char * bufferpointer = buffer;
 	passHack *actualHandlers = pH;
 
 	while (1) {
@@ -123,10 +120,8 @@ void *receiveMessages(void *pH) {
 		// 0/1
 		// WARNING Only supports 8 bit long addresses
 		unsigned long rastaid_rec;
-		memcpy(&rastaid_rec, &bufferpointer[3], 8);
-		//printf("%lX\n", rastaid_rec);
-		/* printf("%s\n", bufferpointer);
-		int i;
+		memcpy(&rastaid_rec, &buffer[3], 8);
+		/*int i;
 		for (i = 0; i < n; i++)
 		{
 			if (i > 0) printf(":");
