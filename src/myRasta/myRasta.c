@@ -58,12 +58,12 @@ void onConnectionStateChangeProxy(struct rasta_notification_result *result, stru
             sendMessageToOC(udpSender, message);
             // This code could be used to reconnect, doesn't make sense for experiment
             // check if we are server
-            /* if (result->connection.my_id == 1) {
+            if ((unsigned long) config_get(&result->handle->config, "RASTA_ID").value.number == 2) {
                 // wait for heartbeat timer to expire
-                printf("Attempting reconnect in %f seconds", (float) (config_get(&result->handle->config, "RASTA_T_H").value.number / 1000));
-                sleep(config_get(&result->handle->config, "RASTA_T_H").value.number / 1000);
+                printf("Attempting reconnect in %f seconds", (float) (config_get(&result->handle->config, "RASTA_T_MAX").value.number / 1000));
+                sleep(config_get(&result->handle->config, "RASTA_T_MAX").value.number / 1000);
                 sr_connect(result->handle, result->connection.remote_id, getRastaIPDataFromID(udpReceiver, result->connection.remote_id));
-            } */
+            }
             break;
         case RASTA_CONNECTION_START:
             printf("\nCONNECTION_START \n\n");
@@ -112,18 +112,19 @@ void onReceiveProxy(struct rasta_notification_result *result, struct internalUDP
 	// prepare logging
 	int protocoltype = p.appMessage.bytes[0];
     int state = p.appMessage.bytes[43];
-	printf("prot, state: %d, %d\n", protocoltype, state);
-    char orderID[p.appMessage.length - 47];
-	memset(orderID, '\0', sizeof(orderID));
+    int sizeOrderID = p.appMessage.length - 44;
+    char orderID[sizeOrderID];
 
     if (protocoltype == 0x40) {
 		//u8strncpy(orderID, message + 47, sizeof(message)-1);
-        strncpy(orderID, p.appMessage.bytes + 47, p.appMessage.length - 1);
+        strncpy(orderID, p.appMessage.bytes + 45, sizeOrderID);
     } else if (protocoltype == 0x30) {
-        strncpy(orderID, p.appMessage.bytes + 47, p.appMessage.length - 1);
+        strncpy(orderID, p.appMessage.bytes + 45, sizeOrderID);
     }
 
-    sendMessageToOC(udpSender, p.appMessage.bytes);
+    sendBytearrayToOC(udpSender, p.appMessage.bytes, p.appMessage.length);
+
+    logger_log(&result->handle->logger, LOG_LEVEL_INFO, "RASTA_RECEIVED", "%d-%d-%s", protocoltype, state, orderID);
 }
 
 void packMyRaSTAMessage(char *output, int internal, unsigned long rastaSender, unsigned long rastaReceiver, char *message) {

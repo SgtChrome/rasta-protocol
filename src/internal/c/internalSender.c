@@ -74,3 +74,18 @@ int sendMessageToOC(struct internalUDPhandle udp, char * message) {
 
 	return 1;
 }
+
+int sendBytearrayToOC(struct internalUDPhandle udp, char * message, int len) {
+	int n;
+
+	n = sendto(udp.sockfd, (const char *)message, len,
+		NULL, udp.addrinfo.ai_addr, udp.addrinfo.ai_addrlen);
+
+	if (n < 0) {
+        printf("Oh: %s\n", strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+	//printf("Message sent: %d - %s\n", n, message);
+
+	return 1;
+}

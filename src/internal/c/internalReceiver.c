@@ -24,14 +24,14 @@ typedef struct {
 } passHack;
 
 
-/* struct RastaIPData * getRastaIPDataFromID(struct internalUDPhandle udpReceiver, unsigned long rastaID) {
+struct RastaIPData * getRastaIPDataFromID(struct internalUDPhandle udpReceiver, unsigned long rastaID) {
 	for (unsigned int i = 0; i < udpReceiver.connectionsCount; i++) {
 		if (udpReceiver.connections[i].rastaID == rastaID) {
-			return &udpReceiver.connections[i].ipdata;
+			return getServerDataFromConfig(&udpReceiver.connections[i]);
 		}
 	};
 	return -1;
-}; */
+};
 
 
 int initUDPReceiver(struct internalUDPhandle *udp) {
@@ -58,52 +58,50 @@ int initUDPReceiver(struct internalUDPhandle *udp) {
 	return 1;
 }
 
-char *u8strncpy(char *dest, const char *src, size_t n)
-{
-  int k = n-1;
-  int i;
-  if (n) {
-    dest[k] = 0;
-    strncpy(dest,src,n);
-    if (dest[k] & 0x80) { // Last byte has been overwritten
-      for (i=k; (i>0) && ((k-i) < 3) && ((dest[i] & 0xC0) == 0x80); i--) ;
-      switch(k-i) {
-        case 0:                                 dest[i] = '\0'; break;
-        case 1:  if ( (dest[i] & 0xE0) != 0xC0) dest[i] = '\0'; break;
-        case 2:  if ( (dest[i] & 0xF0) != 0xE0) dest[i] = '\0'; break;
-        case 3:  if ( (dest[i] & 0xF8) != 0xF0) dest[i] = '\0'; break;
-      }
-    }
-  }
-  return dest;
+void addRastaByteArray(struct RastaMessageData * data, int pos, char * str, int size) {
+    struct RastaByteArray msg;
+    allocateRastaByteArray(&msg, size);
+    rmemcpy(msg.bytes, str, size);
+
+    data->data_array[pos] = msg;
 }
 
 void sendRastaMessage(struct rasta_handle *h, unsigned long remote_id, char *message, int bufferlength) {
 	struct RastaMessageData messageData1;
 	allocateRastaMessageData(&messageData1, 1);
-	addRastaString(&messageData1,0,(char*) message);
+	addRastaByteArray(&messageData1,0,(char*) message, bufferlength);
 
 	// prepare logging
 	int protocoltype = message[0];
     int state = message[43];
-    char orderID[bufferlength - 47];
+	int sizeOrderID = bufferlength - 44;
+    char orderID[sizeOrderID];
 
     if (protocoltype == 0x40) {
-		//u8strncpy(orderID, message + 47, sizeof(message)-1);
-        strncpy(orderID, message + 47, bufferlength - 47);
+        strncpy(orderID, message + 45, sizeOrderID);
     } else if (protocoltype == 0x30) {
-        strncpy(orderID, message + 47, bufferlength - 47);
+        strncpy(orderID, message + 45, sizeOrderID);
     }
 
+	/* int i;
+	for (i = 0; i < messageData1.data_array->length; i++)
+	{
+		if (i > 0) printf(":");
+		printf("%02X", messageData1.data_array->bytes[i]);
+	}
+	printf("\n"); */
+
+	printf("%s\n", orderID);
 	sr_send(h, remote_id, messageData1);
 
-	logger_log(&h->logger, LOG_LEVEL_INFO, "Rasta_SENT", "%d-%d-%s", protocoltype, state, orderID);
+	logger_log(&h->logger, LOG_LEVEL_INFO, "RASTA_SENT", "%d-%d-%s", protocoltype, state, orderID);
 	//logger_log(&h->logger, LOG_LEVEL_DEBUG, "Rasta_SENT", "Rasta message sent to %lX: %s\n", remote_id, message);
 }
 
 void *receiveMessages(void *pH) {
 	int n;
 	char buffer[MAXLINE];
+	char * bufferpointer = buffer;
 	passHack *actualHandlers = pH;
 
 	while (1) {
@@ -114,14 +112,16 @@ void *receiveMessages(void *pH) {
 			exit(EXIT_FAILURE);
 		}
 		buffer[n] = '\0';
-		logger_log(&actualHandlers->handle->logger, LOG_LEVEL_DEBUG, "Receive_Internal", "Internal message arrived: %d bytes - %s", n, buffer);
+		logger_log(&actualHandlers->handle->logger, LOG_LEVEL_INFO, "Receive_Internal", "Internal message arrived: %d bytes - %s", n, buffer);
 
 		// Messages structure:
 		// 0/1
 		// WARNING Only supports 8 bit long addresses
 		unsigned long rastaid_rec;
-		memcpy(&rastaid_rec, &buffer[3], 8);
-		/*int i;
+		memcpy(&rastaid_rec, &bufferpointer[3], 8);
+		//printf("%lX\n", rastaid_rec);
+		/* printf("%s\n", bufferpointer);
+		int i;
 		for (i = 0; i < n; i++)
 		{
 			if (i > 0) printf(":");
@@ -140,7 +140,7 @@ void *receiveMessages(void *pH) {
 			/* char *message;
 			asprintf(&message, "0;%lX;%lX;%s", config_get(&actualHandlers->handle->config, "RASTA_ID").value.number,  rastaid_rec, buffer);
 			free(message); */
-			sendRastaMessage(actualHandlers->handle, rastaid_rec, buffer, n);
+			sendRastaMessage(actualHandlers->handle, rastaid_rec - 48, buffer, n);
 		} else {
 			int code = (int)buffer[1] - 48;
 			logger_log(&actualHandlers->handle->logger, LOG_LEVEL_DEBUG, "Receive_Internal", "Code: %d", code);
