@@ -99,8 +99,8 @@ int main(){
 
     for (unsigned int i = 0; i < udpReceiver.connectionsCount; i++) {
         struct RastaIPData *test = getServerDataFromConfig(&udpReceiver.connections[i]);
-        printf("Trying to connect to Client %d on %s:%d with RastaID %lX\n", i, test[0].ip,test[0].port, udpReceiver.connections->rastaID);
-        sr_connect(&h, udpReceiver.connections->rastaID, test);
+        printf("Trying to connect to Client %d on %s:%d and %s:%d with RastaID %lX\n", i, test[0].ip,test[0].port, test[1].ip, test[1].port, udpReceiver.connections[i].rastaID);
+        sr_connect(&h, udpReceiver.connections[i].rastaID, test);
     }
     // Testcode
     // 0/1 Message/Internal; RastaID_Sender; RastaID_Receiver; message
