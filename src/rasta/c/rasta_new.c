@@ -1584,7 +1584,7 @@ void sr_init_handle(struct rasta_handle* handle, const char* config_file_path) {
 
 
 void sr_connect(struct rasta_handle *handle, unsigned long id, struct RastaIPData *channels) {
-
+    //printf("Trying to connect to client on %s:%d and %s:%d with RastaID %lX\n", channels[0].ip,channels[0].port, channels[1].ip, channels[1].port, id);
     for (unsigned int i = 0; i < handle->connections.size; i++) {
         //TODO: Error handling
         //if (handle->connections.data[i].remote_id == id) return;
@@ -1594,7 +1594,7 @@ void sr_connect(struct rasta_handle *handle, unsigned long id, struct RastaIPDat
 
     struct rasta_connection new_con;
     sr_init_connection(&new_con,id,handle->config.values.general,handle->config.values.sending,&handle->logger, RASTA_ROLE_CLIENT);
-    redundancy_mux_set_config_id(&handle->mux, id);
+    //redundancy_mux_set_config_id(&handle->mux, id);
 
     // initialize seq nums and timestamps
     new_con.sn_t = get_initial_seq_num(&handle->config);
