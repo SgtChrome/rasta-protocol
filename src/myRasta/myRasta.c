@@ -63,8 +63,8 @@ void onConnectionStateChangeProxy(struct rasta_notification_result *result, stru
                 printf("Attempting reconnect in %f seconds", (float) (config_get(&result->handle->config, "RASTA_T_MAX").value.number / 1000));
                 sleep(config_get(&result->handle->config, "RASTA_T_MAX").value.number / 1000);
                 sr_connect(result->handle, result->connection.remote_id, getRastaIPDataFromID(udpReceiver, result->connection.remote_id));
-            }
-            break; */
+            } */
+            break;
         case RASTA_CONNECTION_START:
             printf("\nCONNECTION_START \n\n");
             break;
