@@ -18,10 +18,6 @@
 #define ID_S1 0x62
 #define ID_S2 0x63
 
-
-int client1 = 1;
-int client2 = 1;
-
 struct internalUDPhandle udpSender;
 struct internalUDPhandle udpReceiver;
 
