@@ -37,11 +37,15 @@ typedef enum {
     /**
      * Messages meant for debugging
      */
-    LOG_LEVEL_DEBUG = 3,
+    LOG_LEVEL_DEBUG = 4,
     /**
      * Messages for general connection status
      */
-    LOG_LEVEL_INFO = 2,
+    LOG_LEVEL_INFO = 3,
+    /**
+     * Messages for general connection status
+     */
+    LOG_LEVEL_MEASURE = 2,
     /**
      * Error messages
      */

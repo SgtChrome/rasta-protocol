@@ -92,10 +92,10 @@ void sendRastaMessage(struct rasta_handle *h, unsigned long remote_id, char *mes
 	}
 	printf("\n"); */
 
-	printf("%s\n", orderID);
+	//printf("%s\n", orderID);
 	sr_send(h, remote_id, messageData1);
 
-	logger_log(&h->logger, LOG_LEVEL_INFO, "RASTA_SENT", "%d-%d-%d-%s", protocoltype, messagetype, state, orderID);
+	logger_log(&h->logger, LOG_LEVEL_MEASURE, "RASTA_SENT", "%d-%d-%d-%s", protocoltype, messagetype, state, orderID);
 	//logger_log(&h->logger, LOG_LEVEL_DEBUG, "Rasta_SENT", "Rasta message sent to %lX: %s\n", remote_id, message);
 }
 

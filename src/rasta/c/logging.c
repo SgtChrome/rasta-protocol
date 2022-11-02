@@ -75,11 +75,11 @@ char * get_log_message_string(log_level max_log_level, log_level level, char * l
 
     unsigned long long millisecondsSinceEpoch =
             // milliseconds
-            (unsigned long long)(tv.tv_sec) * 1000 +
-            (unsigned long long)(tv.tv_usec) / 1000;
+            //(unsigned long long)(tv.tv_sec) * 1000 +
+            //(unsigned long long)(tv.tv_usec) / 1000;
             // microseconds
-            //(unsigned long long)(tv.tv_sec) * 1000000 +
-            //(unsigned long long)(tv.tv_usec);
+            (unsigned long long)(tv.tv_sec) * 1000000 +
+            (unsigned long long)(tv.tv_usec);
 
     // generate log level string
     char level_str[30];
@@ -93,6 +93,9 @@ char * get_log_message_string(log_level max_log_level, log_level level, char * l
         case LOG_LEVEL_INFO:
             rstrcpy(level_str, "INFO");
             break;
+        case LOG_LEVEL_MEASURE:
+            rstrcpy(level_str, "MEASURE");
+            break;
         default:
             perror("invalid log level\n");
     }
@@ -101,7 +104,7 @@ char * get_log_message_string(log_level max_log_level, log_level level, char * l
     strftime(timestamp, sizeof(timestamp), "%x|%X", time_info);
 
     // add milliseconds to timestamp
-    sprintf(timestamp2, "%s (Epoch time: %llu)", timestamp, millisecondsSinceEpoch);
+    sprintf(timestamp2, "%s(%llu)", timestamp, millisecondsSinceEpoch);
 
     char *  msg_string = rmalloc(LOGGER_MAX_MSG_SIZE);
     sprintf(msg_string, LOG_FORMAT, timestamp2, level_str, location, msg_str);
