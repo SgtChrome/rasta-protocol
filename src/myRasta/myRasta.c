@@ -111,6 +111,7 @@ void onReceiveProxy(struct rasta_notification_result *result, struct internalUDP
 
 	// prepare logging
 	int protocoltype = p.appMessage.bytes[0];
+    int messagetype = p.appMessage.bytes[1] | p.appMessage.bytes[2] << 8;
     int state = p.appMessage.bytes[43];
     int sizeOrderID = p.appMessage.length - 44;
     char orderID[sizeOrderID];
@@ -124,7 +125,7 @@ void onReceiveProxy(struct rasta_notification_result *result, struct internalUDP
 
     sendBytearrayToOC(udpSender, p.appMessage.bytes, p.appMessage.length);
 
-    logger_log(&result->handle->logger, LOG_LEVEL_INFO, "RASTA_RECEIVED", "%d-%d-%s", protocoltype, state, orderID);
+    logger_log(&result->handle->logger, LOG_LEVEL_INFO, "RASTA_RECEIVED", "%d-%d-%d-%s", protocoltype, messagetype, state, orderID);
 }
 
 void packMyRaSTAMessage(char *output, int internal, unsigned long rastaSender, unsigned long rastaReceiver, char *message) {
