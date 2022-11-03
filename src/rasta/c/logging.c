@@ -104,10 +104,11 @@ char * get_log_message_string(log_level max_log_level, log_level level, char * l
     strftime(timestamp, sizeof(timestamp), "%x|%X", time_info);
 
     // add milliseconds to timestamp
-    sprintf(timestamp2, "%s(%llu)", timestamp, millisecondsSinceEpoch);
+    sprintf(timestamp2, "(%llu)", millisecondsSinceEpoch);
 
     char *  msg_string = rmalloc(LOGGER_MAX_MSG_SIZE);
     sprintf(msg_string, LOG_FORMAT, timestamp2, level_str, location, msg_str);
+    //sprintf(msg_string, timestamp2, level_str, location, msg_str);
 
     return msg_string;
 }

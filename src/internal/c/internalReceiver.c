@@ -78,11 +78,8 @@ void sendRastaMessage(struct rasta_handle *h, unsigned long remote_id, char *mes
 	int sizeOrderID = bufferlength - 44;
     char orderID[sizeOrderID];
 
-    if (protocoltype == 0x40) {
-        strncpy(orderID, message + 45, sizeOrderID);
-    } else if (protocoltype == 0x30) {
-        strncpy(orderID, message + 45, sizeOrderID);
-    }
+	strncpy(orderID, message + 45, sizeOrderID);
+
 
 	/* int i;
 	for (i = 0; i < messageData1.data_array->length; i++)
@@ -97,6 +94,7 @@ void sendRastaMessage(struct rasta_handle *h, unsigned long remote_id, char *mes
 
 	logger_log(&h->logger, LOG_LEVEL_MEASURE, "RASTA_SENT", "%d-%d-%d-%s", protocoltype, messagetype, state, orderID);
 	//logger_log(&h->logger, LOG_LEVEL_DEBUG, "Rasta_SENT", "Rasta message sent to %lX: %s\n", remote_id, message);
+	freeRastaMessageData(&messageData1);
 }
 
 void *receiveMessages(void *pH) {
@@ -141,7 +139,7 @@ void *receiveMessages(void *pH) {
 			/* char *message;
 			asprintf(&message, "0;%lX;%lX;%s", config_get(&actualHandlers->handle->config, "RASTA_ID").value.number,  rastaid_rec, buffer);
 			free(message); */
-			sendRastaMessage(actualHandlers->handle, rastaid_rec - 48, buffer, n);
+			sendRastaMessage(actualHandlers->handle, rastaid_rec, buffer, n);
 		} else {
 			int code = (int)buffer[1] - 48;
 			logger_log(&actualHandlers->handle->logger, LOG_LEVEL_DEBUG, "Receive_Internal", "Code: %d", code);

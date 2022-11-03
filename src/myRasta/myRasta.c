@@ -116,14 +116,9 @@ void onReceiveProxy(struct rasta_notification_result *result, struct internalUDP
     int sizeOrderID = p.appMessage.length - 44;
     char orderID[sizeOrderID];
 
-    if (protocoltype == 0x40) {
-		//u8strncpy(orderID, message + 47, sizeof(message)-1);
-        strncpy(orderID, p.appMessage.bytes + 45, sizeOrderID);
-    } else if (protocoltype == 0x30) {
-        strncpy(orderID, p.appMessage.bytes + 45, sizeOrderID);
-    }
+    strncpy(orderID, (char *) p.appMessage.bytes + 45, sizeOrderID);
 
-    sendBytearrayToOC(udpSender, p.appMessage.bytes, p.appMessage.length);
+    sendBytearrayToOC(udpSender, (char *) p.appMessage.bytes, p.appMessage.length);
 
     logger_log(&result->handle->logger, LOG_LEVEL_MEASURE, "RASTA_RECEIVED", "%d-%d-%d-%s", protocoltype, messagetype, state, orderID);
 }
@@ -131,3 +126,11 @@ void onReceiveProxy(struct rasta_notification_result *result, struct internalUDP
 void packMyRaSTAMessage(char *output, int internal, unsigned long rastaSender, unsigned long rastaReceiver, char *message) {
     asprintf(&output, "%d;%x;%lX;%d", internal, rastaSender, rastaReceiver, message);
 }
+
+/* int i;
+for (i = 0; i < p.appMessage.length; i++)
+{
+    if (i > 0) printf(":");
+    printf("%02X", p.appMessage.bytes[i]);
+}
+printf("\n"); */
