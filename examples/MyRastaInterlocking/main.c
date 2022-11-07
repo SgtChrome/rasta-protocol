@@ -94,7 +94,7 @@ int main(){
     printf("->ID = 0x%lX\n", (unsigned long) config_get(&h.config, "RASTA_ID").value.number);
 
     // Wait for everything to "settle"
-    // sleep(2);
+    sleep(2);
     // go through all the collected ip address and try to connect to them
 
     for (unsigned int i = 0; i < udpReceiver.connectionsCount; i++) {
@@ -118,4 +118,3 @@ int main(){
 
     return 0;
 }
-
