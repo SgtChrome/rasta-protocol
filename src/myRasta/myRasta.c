@@ -33,12 +33,16 @@ struct RastaIPData * getServerDataFromConfig(struct rastaConnection *connection)
 }
 
 
-void setConnection(int upOrDown, struct rasta_notification_result *result, struct internalUDPhandle udpReceiver) {
+void setConnection(int upOrDown, struct rasta_notification_result *result, struct internalUDPhandle udpReceiver, char * message, struct internalUDPhandle udpSender) {
     for (unsigned int i = 0; i < udpReceiver.connectionsCount; i++) {
         if (udpReceiver.connections[i].rastaID == result->connection.my_id) {
             udpReceiver.connections[i].connectionUp = upOrDown;
             break;
         }
+    }
+    if (result->connection.my_id == 2) {
+        asprintf(&message, "connection;%d;%d", result->connection.remote_id, upOrDown);
+        sendMessageToOC(udpSender, message);
     }
 }
 
@@ -53,9 +57,7 @@ void onConnectionStateChangeProxy(struct rasta_notification_result *result, stru
     switch (result->connection.current_state) {
         case RASTA_CONNECTION_CLOSED:
             printf("\nCONNECTION_CLOSED \n\n");
-            setConnection(0, result, udpReceiver);
-            asprintf(&message, "1;%d;%d", result->connection.my_id, RASTA_CONNECTION_CLOSED);
-            //sendMessageToOC(udpSender, message);
+            setConnection(0, result, udpReceiver, message, udpSender);
             // This code could be used to reconnect, doesn't make sense for experiment
             // check if we are server
             /* if ((unsigned long) config_get(&result->handle->config, "RASTA_ID").value.number == 2) {
@@ -70,16 +72,11 @@ void onConnectionStateChangeProxy(struct rasta_notification_result *result, stru
             break;
         case RASTA_CONNECTION_DOWN:
             printf("\nCONNECTION_DOWN \n\n");
-            setConnection(0, result, udpReceiver);
-            asprintf(&message, "1;%d;%d", result->connection.my_id, RASTA_CONNECTION_DOWN);
-            //sendMessageToOC(udpSender, message);
+            setConnection(0, result, udpReceiver, message, udpSender);
             break;
         case RASTA_CONNECTION_UP:
             printf("\nCONNECTION_UP \n\n");
-            fflush(stdout);
-            setConnection(1, result, udpReceiver);
-            asprintf(&message, "1;%d;%d", result->connection.my_id, RASTA_CONNECTION_UP);
-            //sendMessageToOC(udpSender, message);
+            setConnection(1, result, udpReceiver, message, udpSender);
             // use if message source is important
             // if (result->connection.my_id == ID_S1) { //Client 1
             break;
