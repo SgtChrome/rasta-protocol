@@ -1587,7 +1587,10 @@ void sr_connect(struct rasta_handle *handle, unsigned long id, struct RastaIPDat
     //printf("Trying to connect to client on %s:%d and %s:%d with RastaID %lX\n", channels[0].ip,channels[0].port, channels[1].ip, channels[1].port, id);
     for (unsigned int i = 0; i < handle->connections.size; i++) {
         //TODO: Error handling
-        //if (handle->connections.data[i].remote_id == id) return;
+        if (handle->connections.data[i].remote_id == id) {
+            printf("Channel %lX already established", id);
+            return;
+        }
     }
     //TODO: const ports in redundancy? (why no dynamic port length)
     redundancy_mux_add_channel(&handle->mux,id,channels);
