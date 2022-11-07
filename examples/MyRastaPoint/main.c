@@ -54,8 +54,26 @@ int main(){
     startInternalReceiver(udpReceiver, udpSender, &h);
     logger_log(&h.logger,LOG_LEVEL_DEBUG, "Startup", "All notification handlers initiated\n");
 
-    pause();
+    char *message;
+    asprintf(&message, "boot;%lX", (unsigned long) config_get(&h.config, "RASTA_ID").value.number);
+    int s;
+    struct addrinfo *result;
+    const char* name = "10.0.2.2";
+	struct addrinfo hints;
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
+	hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
+	hints.ai_protocol = 0;          /* Any protocol */
+	hints.ai_canonname = NULL;
+	hints.ai_addr = NULL;
+	hints.ai_next = NULL;
 
+	s = getaddrinfo(name, "20000", &hints, &result);
+    printf("Sending to %c:%d", result->ai_addr);
+    sendto(udpSender.sockfd, (const char *)message, strlen(message),
+		NULL, result->ai_addr, result->ai_addrlen);
+
+    pause();
     printf("Starting clean up\n");
     sr_cleanup(&h);
 
