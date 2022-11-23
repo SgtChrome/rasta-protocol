@@ -69,7 +69,7 @@ int main(){
 	hints.ai_next = NULL;
 
 	s = getaddrinfo(name, "20000", &hints, &result);
-    printf("Sending to %c:%d", result->ai_addr);
+    //printf("Sending to %c:%d", result->ai_addr);
     sendto(udpSender.sockfd, (const char *)message, strlen(message),
 		NULL, result->ai_addr, result->ai_addrlen);
 
